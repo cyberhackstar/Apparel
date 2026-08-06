@@ -1,0 +1,108 @@
+<div class="p-8">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="font-display text-2xl">Products</h1>
+    <div class="flex gap-3">
+      <button (click)="showBulkUpload.set(!showBulkUpload())" class="btn-secondary !py-2 text-sm">Bulk Upload (CSV)</button>
+      <a routerLink="/admin/products/new" class="btn-primary !py-2 text-sm">+ Add Product</a>
+    </div>
+  </div>
+
+  @if (showBulkUpload()) {
+    <div class="card p-6 mb-6">
+      <h3 class="font-display text-lg mb-2">Bulk Upload Products</h3>
+      <p class="font-body text-xs text-ink/50 mb-4">
+        CSV columns (one row per variant, grouped by product name): productName, description, categoryId, brand, fabric,
+        basePrice, mrp, discountPercentage, gstPercentage, tags, size, color, sku, stockQuantity, additionalPrice
+      </p>
+      <div class="flex gap-3 mb-4">
+        <input type="file" accept=".csv" (change)="onFileSelected($event)" class="font-body text-sm" />
+        <button (click)="uploadCsv()" class="btn-primary !py-2 text-sm" [disabled]="uploading()">
+          {{ uploading() ? 'Uploading…' : 'Upload' }}
+        </button>
+      </div>
+
+      @if (uploadResult(); as result) {
+        <div class="bg-ivory rounded-petal-sm p-4 font-body text-sm">
+          <p>Rows read: {{ result.totalRowsRead }} · Created: <span class="text-green-700 font-semibold">{{ result.productsCreated }}</span> · Failed: <span class="text-wine font-semibold">{{ result.productsFailed }}</span></p>
+          @if (result.errors.length > 0) {
+            <ul class="mt-2 list-disc list-inside text-xs text-ink/60 space-y-1">
+              @for (err of result.errors; track $index) {
+                <li>{{ err }}</li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <div class="flex gap-2 mb-6 max-w-md">
+    <input
+      type="text" [(ngModel)]="keyword" (keydown.enter)="search()" placeholder="Search products…"
+      class="input-field !py-2 text-sm"
+    />
+    <button (click)="search()" class="btn-secondary !py-2 text-sm">Search</button>
+  </div>
+
+  @if (loading()) {
+    <p class="font-body text-ink/50">Loading…</p>
+  } @else {
+    <div class="card overflow-hidden">
+      <table class="w-full font-body text-sm">
+        <thead class="bg-ink/5 text-left">
+          <tr>
+            <th class="px-4 py-3">Product</th>
+            <th class="px-4 py-3">Category</th>
+            <th class="px-4 py-3">Price</th>
+            <th class="px-4 py-3">Stock</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products(); track product.id) {
+            <tr class="border-t border-ink/5">
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <img
+                    [src]="product.images[0]?.imageUrl || 'https://placehold.co/60x70/F1DDE0/7A2E38?text=—'"
+                    class="w-10 h-12 object-cover rounded-petal-sm"
+                  />
+                  <span class="max-w-[240px] truncate">{{ product.name }}</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-ink/60">{{ product.categoryName }}</td>
+              <td class="px-4 py-3">₹{{ product.basePrice | number: '1.0-0' }}</td>
+              <td class="px-4 py-3" [class.text-wine]="totalStock(product) < 10">{{ totalStock(product) }}</td>
+              <td class="px-4 py-3">
+                <span class="text-xs px-2 py-1 rounded-petal-sm" [class]="product.active ? 'bg-green-50 text-green-700' : 'bg-ink/5 text-ink/40'">
+                  {{ product.active ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <a [routerLink]="['/admin/products', product.id, 'edit']" class="text-wine hover:underline mr-3">Edit</a>
+                @if (product.active) {
+                  <button (click)="deactivate(product.id)" class="text-ink/40 hover:underline">Deactivate</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="flex justify-center gap-2 mt-6">
+        @for (p of [].constructor(totalPages()); track $index) {
+          <button
+            (click)="goToPage($index)"
+            class="w-9 h-9 rounded-petal-sm text-sm font-body"
+            [class]="page() === $index ? 'bg-wine text-ivory' : 'bg-white border border-ink/15'"
+          >
+            {{ $index + 1 }}
+          </button>
+        }
+      </div>
+    }
+  }
+</div>

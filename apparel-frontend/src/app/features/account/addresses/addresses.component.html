@@ -1,0 +1,120 @@
+<div [class.max-w-4xl]="!selectionMode" [class.mx-auto]="!selectionMode" [class.px-4]="!selectionMode" [class.sm:px-6]="!selectionMode" [class.py-10]="!selectionMode">
+  @if (!selectionMode) {
+    <h1 class="font-display text-3xl mb-8">Your Addresses</h1>
+  }
+
+  @if (loading()) {
+    <p class="font-body text-ink/50">Loading addresses…</p>
+  } @else {
+    <div class="space-y-4 mb-6">
+      @for (address of addresses(); track address.id) {
+        <div
+          class="card p-5 flex items-start gap-4"
+          [class]="selectionMode && selectedAddressId === address.id ? 'ring-2 ring-wine' : ''"
+        >
+          @if (selectionMode) {
+            <button
+              type="button"
+              (click)="select(address)"
+              class="w-5 h-5 rounded-full border-2 mt-1 shrink-0"
+              [class]="selectedAddressId === address.id ? 'border-wine bg-wine' : 'border-ink/30'"
+              aria-label="Select address"
+            ></button>
+          }
+
+          <div class="flex-1 cursor-pointer" (click)="selectionMode ? select(address) : null">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-body font-semibold text-sm">{{ address.fullName }}</span>
+              <span class="text-xs font-body bg-blush text-wine px-2 py-0.5 rounded-petal-sm">{{ address.addressType }}</span>
+              @if (address.isDefault) {
+                <span class="text-xs font-body text-ink/40">Default</span>
+              }
+            </div>
+            <p class="font-body text-sm text-ink/70">
+              {{ address.addressLine1 }}, {{ address.addressLine2 }}
+              @if (address.landmark) { , {{ address.landmark }} }
+              <br />{{ address.city }}, {{ address.state }} - {{ address.pincode }}
+            </p>
+            <p class="font-body text-sm text-ink/50 mt-1">Phone: {{ address.phone }}</p>
+          </div>
+
+          <div class="flex flex-col gap-2 shrink-0">
+            <button (click)="openEditForm(address)" class="font-body text-xs text-wine hover:underline">Edit</button>
+            @if (!address.isDefault) {
+              <button (click)="setDefault(address.id)" class="font-body text-xs text-ink/50 hover:underline">Set Default</button>
+              <button (click)="delete(address.id)" class="font-body text-xs text-ink/50 hover:underline">Delete</button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (!showForm()) {
+      <button (click)="openAddForm()" class="btn-secondary">+ Add New Address</button>
+    }
+  }
+
+  @if (showForm()) {
+    <form [formGroup]="form" (ngSubmit)="save()" class="card p-6 mt-4 space-y-4">
+      <h3 class="font-display text-xl mb-2">{{ editingId() ? 'Edit' : 'Add' }} Address</h3>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">Full Name</label>
+          <input type="text" formControlName="fullName" class="input-field" />
+        </div>
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">Phone</label>
+          <input type="tel" formControlName="phone" class="input-field" />
+        </div>
+      </div>
+
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Address Line 1</label>
+        <input type="text" formControlName="addressLine1" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Address Line 2 (optional)</label>
+        <input type="text" formControlName="addressLine2" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Landmark (optional)</label>
+        <input type="text" formControlName="landmark" class="input-field" />
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-4">
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">City</label>
+          <input type="text" formControlName="city" class="input-field" />
+        </div>
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">State</label>
+          <input type="text" formControlName="state" class="input-field" />
+        </div>
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">Pincode</label>
+          <input type="text" formControlName="pincode" maxlength="6" class="input-field" />
+        </div>
+      </div>
+
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Address Type</label>
+        <select formControlName="addressType" class="input-field">
+          <option value="HOME">Home</option>
+          <option value="WORK">Work</option>
+          <option value="OTHER">Other</option>
+        </select>
+      </div>
+
+      <label class="flex items-center gap-2 font-body text-sm">
+        <input type="checkbox" formControlName="isDefault" />
+        Set as default address
+      </label>
+
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save Address' }}</button>
+        <button type="button" (click)="showForm.set(false)" class="btn-secondary">Cancel</button>
+      </div>
+    </form>
+  }
+</div>

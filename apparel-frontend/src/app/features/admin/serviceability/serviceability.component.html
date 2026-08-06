@@ -1,0 +1,46 @@
+<div class="p-8 max-w-3xl">
+  <h1 class="font-display text-2xl mb-2">Delivery Zones</h1>
+  <p class="font-body text-sm text-ink/50 mb-6">
+    Configure which pincodes you deliver to. If this list is empty, every pincode is treated as serviceable by default.
+  </p>
+
+  <div class="card p-6 mb-8">
+    <h3 class="font-display text-lg mb-4">Add Pincode</h3>
+    <div class="grid sm:grid-cols-2 gap-4 mb-4">
+      <input type="text" [(ngModel)]="newPincode" placeholder="Pincode" maxlength="6" class="input-field" />
+      <input type="text" [(ngModel)]="newCity" placeholder="City" class="input-field" />
+      <input type="text" [(ngModel)]="newState" placeholder="State" class="input-field" />
+      <input type="number" [(ngModel)]="newDeliveryDays" placeholder="Delivery days" class="input-field" />
+    </div>
+    <label class="flex items-center gap-2 font-body text-sm mb-4">
+      <input type="checkbox" [(ngModel)]="newCodAvailable" />
+      Cash on Delivery available for this pincode
+    </label>
+    <button (click)="add()" class="btn-primary" [disabled]="saving()">{{ saving() ? 'Adding…' : 'Add Pincode' }}</button>
+  </div>
+
+  @if (!loading()) {
+    @if (pincodes().length === 0) {
+      <p class="font-body text-ink/50">No pincodes configured — everywhere is currently serviceable.</p>
+    } @else {
+      <div class="card overflow-hidden">
+        <table class="w-full font-body text-sm">
+          <thead class="bg-ink/5 text-left">
+            <tr><th class="px-4 py-3">Pincode</th><th class="px-4 py-3">City/State</th><th class="px-4 py-3">COD</th><th class="px-4 py-3">Delivery</th><th class="px-4 py-3"></th></tr>
+          </thead>
+          <tbody>
+            @for (p of pincodes(); track p.id) {
+              <tr class="border-t border-ink/5">
+                <td class="px-4 py-3">{{ p.pincode }}</td>
+                <td class="px-4 py-3 text-ink/60">{{ p.city }}, {{ p.state }}</td>
+                <td class="px-4 py-3">{{ p.codAvailable ? 'Yes' : 'No' }}</td>
+                <td class="px-4 py-3">{{ p.estimatedDeliveryDays }} days</td>
+                <td class="px-4 py-3 text-right"><button (click)="remove(p.id)" class="text-wine hover:underline">Remove</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

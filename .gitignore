@@ -1,0 +1,32 @@
+# Backend
+apparel-backend/target/
+apparel-backend/.mvn/wrapper/maven-wrapper.jar
+
+# Frontend
+apparel-frontend/node_modules/
+apparel-frontend/dist/
+apparel-frontend/.angular/
+apparel-frontend/.cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+**/.env
+**/.env.*
+
+# IntelliJ
+*.iml
+
+# VS Code
+.history/
+.env
+**/src/main/resources/application.yml

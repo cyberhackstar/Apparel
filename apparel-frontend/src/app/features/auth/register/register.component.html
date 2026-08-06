@@ -1,0 +1,68 @@
+<div class="min-h-screen flex">
+  <!-- Left: brand panel (hidden on mobile) -->
+  <div class="hidden lg:flex lg:w-5/12 bg-wine text-ivory flex-col justify-between p-12 relative overflow-hidden">
+    <div class="absolute -right-24 -bottom-24 w-96 h-96 rounded-full bg-wine-light/30"></div>
+    <a routerLink="/" class="font-display text-2xl tracking-wide relative z-10">Ladies Apparel</a>
+    <div class="relative z-10">
+      <p class="eyebrow text-blush mb-4">Join the atelier</p>
+      <h1 class="font-display text-4xl leading-tight mb-4">
+        Where every piece<br />tells your story.
+      </h1>
+      <p class="font-body text-ivory/70 max-w-sm">
+        Create an account to save your favorites, track orders, and be first to new arrivals.
+      </p>
+    </div>
+    <p class="font-body text-xs text-ivory/50 relative z-10">&copy; {{ '2026' }} Ladies Apparel</p>
+  </div>
+
+  <!-- Right: form -->
+  <div class="flex-1 flex items-center justify-center p-6 sm:p-12">
+    <div class="w-full max-w-md">
+      <h2 class="font-display text-3xl mb-1">Create your account</h2>
+      <p class="text-ink/60 mb-8 font-body">Takes less than a minute.</p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">Full name</label>
+          <input type="text" formControlName="fullName" class="input-field" placeholder="Priya Sharma" />
+          @if (f.fullName.touched && f.fullName.invalid) {
+            <p class="input-error">Please enter your full name.</p>
+          }
+        </div>
+
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">Email</label>
+          <input type="email" formControlName="email" class="input-field" placeholder="you@example.com" />
+          @if (f.email.touched && f.email.invalid) {
+            <p class="input-error">Please enter a valid email.</p>
+          }
+        </div>
+
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">Phone number</label>
+          <input type="tel" formControlName="phone" class="input-field" placeholder="98765 43210" />
+          @if (f.phone.touched && f.phone.invalid) {
+            <p class="input-error">Please enter a valid 10-digit Indian mobile number.</p>
+          }
+        </div>
+
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">Password</label>
+          <input type="password" formControlName="password" class="input-field" placeholder="At least 8 characters" />
+          @if (f.password.touched && f.password.invalid) {
+            <p class="input-error">Password must be at least 8 characters.</p>
+          }
+        </div>
+
+        <button type="submit" class="btn-primary w-full mt-2" [disabled]="loading()">
+          {{ loading() ? 'Creating account…' : 'Create account' }}
+        </button>
+      </form>
+
+      <p class="text-center font-body text-sm text-ink/60 mt-8">
+        Already have an account?
+        <a routerLink="/auth/login" class="text-wine font-semibold hover:underline">Log in</a>
+      </p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,38 @@
+<div class="p-8 max-w-4xl">
+  <h1 class="font-display text-2xl mb-2">Returns &amp; Exchanges</h1>
+  <p class="font-body text-sm text-ink/50 mb-6">Newly requested returns, and approved ones awaiting completion.</p>
+
+  @if (loading()) {
+    <p class="font-body text-ink/50">Loading…</p>
+  } @else if (returns().length === 0) {
+    <p class="font-body text-ink/50">No active return requests. 🎉</p>
+  } @else {
+    <div class="space-y-5">
+      @for (ret of returns(); track ret.id) {
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-2">
+            <p class="font-body font-semibold text-sm">{{ ret.orderNumber }} — {{ ret.customerEmail }}</p>
+            <span class="text-xs font-body font-semibold px-2 py-1 rounded-petal-sm bg-blush text-wine">{{ ret.status }}</span>
+          </div>
+          <p class="font-body text-sm text-ink/70 mb-3">Reason: {{ ret.reason }}</p>
+
+          <div class="flex gap-2 mb-3">
+            <input type="text" [(ngModel)]="notesDraft[ret.id]" placeholder="Admin notes (optional)…" class="input-field !py-2 text-sm flex-1" />
+            @if (ret.status === 'APPROVED') {
+              <input type="number" [(ngModel)]="refundDraft[ret.id]" placeholder="Refund ₹" class="input-field !py-2 text-sm w-32" />
+            }
+          </div>
+
+          <div class="flex gap-3">
+            @if (ret.status === 'REQUESTED') {
+              <button (click)="approve(ret)" class="btn-primary !py-1.5 !px-4 text-xs">Approve</button>
+              <button (click)="reject(ret)" class="btn-secondary !py-1.5 !px-4 text-xs">Reject</button>
+            } @else if (ret.status === 'APPROVED') {
+              <button (click)="complete(ret)" class="btn-primary !py-1.5 !px-4 text-xs">Mark Complete &amp; Refund</button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

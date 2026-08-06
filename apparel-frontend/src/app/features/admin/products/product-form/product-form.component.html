@@ -1,0 +1,130 @@
+<div class="p-8 max-w-4xl">
+  <a routerLink="/admin/products" class="font-body text-sm text-ink/50 hover:text-ink mb-4 inline-block">&larr; Back to products</a>
+  <h1 class="font-display text-2xl mb-8">{{ isEdit() ? 'Edit' : 'Add' }} Product</h1>
+
+  <form [formGroup]="form" (ngSubmit)="save()" class="card p-6 space-y-5 mb-8">
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="sm:col-span-2">
+        <label class="font-body text-sm font-medium mb-1.5 block">Product Name</label>
+        <input type="text" formControlName="name" class="input-field" />
+      </div>
+      <div class="sm:col-span-2">
+        <label class="font-body text-sm font-medium mb-1.5 block">Description</label>
+        <textarea formControlName="description" rows="3" class="input-field"></textarea>
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Category</label>
+        <select formControlName="categoryId" class="input-field">
+          <option [ngValue]="null">Select category</option>
+          @for (cat of categories(); track cat.id) {
+            <option [ngValue]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Brand</label>
+        <input type="text" formControlName="brand" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Fabric</label>
+        <input type="text" formControlName="fabric" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Tags (comma-separated)</label>
+        <input type="text" formControlName="tags" class="input-field" placeholder="new-arrival,bestseller" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Base Price (₹)</label>
+        <input type="number" formControlName="basePrice" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">MRP (₹)</label>
+        <input type="number" formControlName="mrp" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Discount %</label>
+        <input type="number" formControlName="discountPercentage" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">GST %</label>
+        <input type="number" formControlName="gstPercentage" class="input-field" />
+      </div>
+    </div>
+
+    @if (!isEdit()) {
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-body font-semibold text-sm">Variants (Size / Color / SKU / Stock)</h3>
+          <button type="button" (click)="addVariant()" class="font-body text-xs text-wine hover:underline">+ Add Variant</button>
+        </div>
+        <div formArrayName="variants" class="space-y-3">
+          @for (variant of variants.controls; track $index; let i = $index) {
+            <div [formGroupName]="i" class="grid grid-cols-5 gap-2 items-center">
+              <input type="text" formControlName="size" placeholder="Size" class="input-field !py-2 text-sm" />
+              <input type="text" formControlName="color" placeholder="Color" class="input-field !py-2 text-sm" />
+              <input type="text" formControlName="sku" placeholder="SKU" class="input-field !py-2 text-sm" />
+              <input type="number" formControlName="stockQuantity" placeholder="Stock" class="input-field !py-2 text-sm" />
+              <button type="button" (click)="removeVariant(i)" class="text-wine text-sm">Remove</button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <button type="submit" class="btn-primary" [disabled]="saving()">
+      {{ saving() ? 'Saving…' : isEdit() ? 'Save Changes' : 'Create Product' }}
+    </button>
+  </form>
+
+  @if (isEdit() && product(); as p) {
+    <!-- Images -->
+    <div class="card p-6 mb-8">
+      <h3 class="font-display text-lg mb-4">Images</h3>
+      <div class="flex flex-wrap gap-4 mb-4">
+        @for (img of p.images; track img.id) {
+          <div class="relative w-24 h-28">
+            <img [src]="img.imageUrl" class="w-full h-full object-cover rounded-petal-sm" />
+            @if (img.primary) {
+              <span class="absolute top-1 left-1 bg-wine text-ivory text-[9px] font-body px-1.5 py-0.5 rounded">Primary</span>
+            }
+            <button (click)="deleteImage(img.id)" class="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full shadow-card text-xs">✕</button>
+          </div>
+        }
+      </div>
+      <div class="flex gap-3">
+        <label class="btn-secondary !py-2 text-sm cursor-pointer">
+          Upload Image
+          <input type="file" accept="image/*" class="hidden" (change)="onImageSelected($event, false)" [disabled]="uploadingImage()" />
+        </label>
+        <label class="btn-secondary !py-2 text-sm cursor-pointer">
+          Upload as Primary
+          <input type="file" accept="image/*" class="hidden" (change)="onImageSelected($event, true)" [disabled]="uploadingImage()" />
+        </label>
+      </div>
+    </div>
+
+    <!-- Variants & Stock -->
+    <div class="card p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-lg">Variants &amp; Stock</h3>
+        <button (click)="addVariantToExisting()" class="font-body text-xs text-wine hover:underline">+ Add New Variant</button>
+      </div>
+      <table class="w-full font-body text-sm">
+        <thead class="text-left text-ink/50">
+          <tr><th class="py-2">Size</th><th>Color</th><th>SKU</th><th>Stock</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (v of p.variants; track v.id) {
+            <tr class="border-t border-ink/5">
+              <td class="py-2">{{ v.size }}</td>
+              <td>{{ v.color }}</td>
+              <td>{{ v.sku }}</td>
+              <td [class.text-wine]="v.stockQuantity < 10">{{ v.stockQuantity }}</td>
+              <td class="text-right"><button (click)="updateStock(v.id, v.stockQuantity)" class="text-wine hover:underline">Update Stock</button></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

@@ -1,0 +1,46 @@
+<a [routerLink]="['/products', product.slug]" class="group block">
+  <div class="relative rounded-petal overflow-hidden bg-blush aspect-[4/5] mb-3">
+    <img
+      [src]="primaryImage"
+      [alt]="product.name"
+      loading="lazy"
+      class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+    />
+
+    @if (product.discountPercentage > 0) {
+      <span class="absolute top-3 left-3 bg-wine text-ivory text-xs font-semibold font-body px-2.5 py-1 rounded-petal-sm">
+        {{ product.discountPercentage }}% OFF
+      </span>
+    }
+
+    @if (!inStock) {
+      <span class="absolute inset-0 bg-ink/40 flex items-center justify-center text-ivory font-body font-semibold text-sm">
+        Out of Stock
+      </span>
+    }
+
+    <button
+      type="button"
+      (click)="onWishlistClick($event)"
+      class="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 flex items-center justify-center
+             shadow-card transition-transform hover:scale-110"
+      [attr.aria-label]="wishlisted ? 'Remove from wishlist' : 'Add to wishlist'"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" [class]="wishlisted ? 'fill-wine' : 'fill-none stroke-ink stroke-2'">
+        <path d="M12 21s-6.716-4.35-9.428-8.485C.61 9.35 1.5 5 5.5 4 8 3.35 10 4.5 12 7c2-2.5 4-3.65 6.5-3 4 1 4.89 5.35 2.928 8.515C18.716 16.65 12 21 12 21z"/>
+      </svg>
+    </button>
+  </div>
+
+  <p class="eyebrow mb-1">{{ product.categoryName }}</p>
+  <h3 class="font-display text-lg leading-snug mb-1 group-hover:text-wine transition-colors">{{ product.name }}</h3>
+
+  <app-star-rating [value]="product.averageRating" [reviewCount]="product.ratingCount" [size]="14" class="mb-1.5 block" />
+
+  <div class="flex items-baseline gap-2">
+    <span class="font-display text-lg text-ink">₹{{ product.basePrice | number: '1.0-0' }}</span>
+    @if (product.mrp > product.basePrice) {
+      <span class="font-body text-sm text-ink/40 line-through">₹{{ product.mrp | number: '1.0-0' }}</span>
+    }
+  </div>
+</a>

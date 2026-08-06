@@ -1,0 +1,163 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="font-display text-3xl">
+        @if (filters.keyword) {
+          Results for "{{ filters.keyword }}"
+        } @else {
+          All Products
+        }
+      </h1>
+      <p class="font-body text-sm text-ink/50 mt-1">{{ totalElements() }} products</p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button class="lg:hidden btn-secondary !px-4 !py-2 text-sm" (click)="filtersOpen.set(!filtersOpen())">
+        Filters
+      </button>
+      <select
+        class="input-field !py-2 text-sm w-auto"
+        [value]="filters.sortBy + ':' + filters.sortDir"
+        (change)="onSortChange($any($event.target).value)"
+      >
+        <option value="createdAt:desc">Newest</option>
+        <option value="basePrice:asc">Price: Low to High</option>
+        <option value="basePrice:desc">Price: High to Low</option>
+        <option value="ratingCount:desc">Popularity</option>
+        <option value="discountPercentage:desc">Discount</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="flex gap-8">
+    <!-- Filters sidebar -->
+    <aside class="hidden lg:block w-64 shrink-0 space-y-8">
+      <div>
+        <h3 class="font-body font-semibold text-sm mb-3">Category</h3>
+        <ul class="space-y-2 font-body text-sm">
+          @for (cat of categories(); track cat.id) {
+            <li>
+              <button
+                (click)="applyFilter({ categoryId: cat.id })"
+                class="text-left w-full"
+                [class]="filters.categoryId === cat.id ? 'text-wine font-semibold' : 'text-ink/70 hover:text-ink'"
+              >
+                {{ cat.name }}
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="font-body font-semibold text-sm mb-3">Size</h3>
+        <div class="flex flex-wrap gap-2">
+          @for (size of availableSizes; track size) {
+            <button
+              (click)="applyFilter({ size: filters.size === size ? undefined : size })"
+              class="w-10 h-10 rounded-petal-sm border text-sm font-body"
+              [class]="filters.size === size ? 'bg-wine text-ivory border-wine' : 'border-ink/20 hover:border-wine'"
+            >
+              {{ size }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div>
+        <h3 class="font-body font-semibold text-sm mb-3">Price</h3>
+        <div class="space-y-2 font-body text-sm">
+          @for (range of [[0,999],[1000,1999],[2000,3999],[4000,9999]]; track range) {
+            <button
+              (click)="applyFilter({ minPrice: range[0], maxPrice: range[1] })"
+              class="block text-left w-full"
+              [class]="filters.minPrice === range[0] ? 'text-wine font-semibold' : 'text-ink/70 hover:text-ink'"
+            >
+              ₹{{ range[0] }} – ₹{{ range[1] }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <button (click)="clearFilters()" class="font-body text-sm text-wine hover:underline">Clear all filters</button>
+    </aside>
+
+    <!-- Mobile filters -->
+    @if (filtersOpen()) {
+      <div class="lg:hidden fixed inset-0 z-50 bg-ink/40" (click)="filtersOpen.set(false)">
+        <div class="absolute right-0 top-0 bottom-0 w-80 bg-ivory p-6 overflow-y-auto" (click)="$event.stopPropagation()">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="font-display text-xl">Filters</h3>
+            <button (click)="filtersOpen.set(false)" class="text-2xl leading-none">&times;</button>
+          </div>
+          <h3 class="font-body font-semibold text-sm mb-3">Category</h3>
+          <ul class="space-y-2 font-body text-sm mb-6">
+            @for (cat of categories(); track cat.id) {
+              <li>
+                <button (click)="applyFilter({ categoryId: cat.id }); filtersOpen.set(false)" class="text-left w-full text-ink/70">
+                  {{ cat.name }}
+                </button>
+              </li>
+            }
+          </ul>
+          <h3 class="font-body font-semibold text-sm mb-3">Size</h3>
+          <div class="flex flex-wrap gap-2 mb-6">
+            @for (size of availableSizes; track size) {
+              <button
+                (click)="applyFilter({ size }); filtersOpen.set(false)"
+                class="w-10 h-10 rounded-petal-sm border text-sm font-body border-ink/20"
+              >
+                {{ size }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Product grid -->
+    <div class="flex-1">
+      @if (loading()) {
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-10">
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="animate-pulse">
+              <div class="rounded-petal bg-blush aspect-[4/5] mb-3"></div>
+              <div class="h-4 bg-blush rounded w-3/4 mb-2"></div>
+              <div class="h-4 bg-blush rounded w-1/2"></div>
+            </div>
+          }
+        </div>
+      } @else if (products().length === 0) {
+        <div class="text-center py-24">
+          <p class="font-display text-2xl mb-2">No products found</p>
+          <p class="font-body text-ink/50 mb-6">Try adjusting your filters or search terms.</p>
+          <button (click)="clearFilters()" class="btn-secondary">Clear filters</button>
+        </div>
+      } @else {
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-10">
+          @for (product of products(); track product.id) {
+            <app-product-card
+              [product]="product"
+              [wishlisted]="wishlistService.isWishlisted(product.id)"
+              (wishlistToggle)="toggleWishlist($event)"
+            />
+          }
+        </div>
+
+        @if (totalPages() > 1) {
+          <div class="flex justify-center gap-2 mt-12">
+            @for (page of pageNumbers; track page) {
+              <button
+                (click)="goToPage(page)"
+                class="w-9 h-9 rounded-petal-sm text-sm font-body"
+                [class]="filters.page === page ? 'bg-wine text-ivory' : 'bg-white border border-ink/15 hover:border-wine'"
+              >
+                {{ page + 1 }}
+              </button>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

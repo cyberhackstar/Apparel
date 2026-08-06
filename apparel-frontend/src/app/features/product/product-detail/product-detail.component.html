@@ -1,0 +1,234 @@
+@if (loading()) {
+  <div class="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-12 animate-pulse">
+    <div class="rounded-petal bg-blush aspect-[4/5]"></div>
+    <div class="space-y-4">
+      <div class="h-8 bg-blush rounded w-2/3"></div>
+      <div class="h-6 bg-blush rounded w-1/3"></div>
+      <div class="h-24 bg-blush rounded"></div>
+    </div>
+  </div>
+} @else if (product(); as p) {
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+    <div class="grid md:grid-cols-2 gap-12">
+      <!-- Gallery -->
+      <div>
+        <div class="rounded-petal overflow-hidden bg-blush aspect-[4/5] mb-4">
+          <img
+            [src]="p.images[activeImageIndex()]?.imageUrl || 'https://placehold.co/600x750/F1DDE0/7A2E38?text=Ladies+Apparel'"
+            [alt]="p.name"
+            class="w-full h-full object-cover"
+          />
+        </div>
+        @if (p.images.length > 1) {
+          <div class="flex gap-3">
+            @for (img of p.images; track img.id; let i = $index) {
+              <button
+                (click)="activeImageIndex.set(i)"
+                class="w-16 h-20 rounded-petal-sm overflow-hidden border-2"
+                [class]="activeImageIndex() === i ? 'border-wine' : 'border-transparent'"
+              >
+                <img [src]="img.imageUrl" [alt]="p.name" class="w-full h-full object-cover" />
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Details -->
+      <div>
+        <p class="eyebrow mb-2">{{ p.categoryName }}{{ p.brand ? ' · ' + p.brand : '' }}</p>
+        <h1 class="font-display text-3xl mb-3">{{ p.name }}</h1>
+        <app-star-rating [value]="p.averageRating" [reviewCount]="p.ratingCount" class="mb-4 block" />
+
+        <div class="flex items-baseline gap-3 mb-6">
+          <span class="font-display text-3xl">₹{{ discountedPrice | number: '1.0-0' }}</span>
+          @if (mrpPrice > discountedPrice) {
+            <span class="font-body text-lg text-ink/40 line-through">₹{{ mrpPrice | number: '1.0-0' }}</span>
+            <span class="font-body text-sm font-semibold text-wine">{{ p.discountPercentage }}% off</span>
+          }
+        </div>
+
+        <!-- Size -->
+        <div class="mb-6">
+          <p class="font-body font-semibold text-sm mb-2">Size</p>
+          <div class="flex flex-wrap gap-2">
+            @for (size of availableSizes(); track size) {
+              <button
+                (click)="selectSize(size)"
+                class="w-12 h-11 rounded-petal-sm border text-sm font-body"
+                [class]="selectedSize() === size ? 'bg-wine text-ivory border-wine' : 'border-ink/20 hover:border-wine'"
+              >
+                {{ size }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Color -->
+        <div class="mb-6">
+          <p class="font-body font-semibold text-sm mb-2">Color</p>
+          <div class="flex flex-wrap gap-2">
+            @for (color of availableColors(); track color) {
+              <button
+                (click)="selectColor(color)"
+                class="px-4 h-11 rounded-petal-sm border text-sm font-body"
+                [class]="selectedColor() === color ? 'bg-wine text-ivory border-wine' : 'border-ink/20 hover:border-wine'"
+              >
+                {{ color }}
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (selectedVariant(); as v) {
+          @if (!v.inStock) {
+            <p class="text-wine font-body text-sm mb-4">Out of stock in this size/color.</p>
+          } @else if (v.stockQuantity <= 5) {
+            <p class="text-wine font-body text-sm mb-4">Only {{ v.stockQuantity }} left — order soon!</p>
+          }
+        }
+
+        <!-- Quantity + Add to cart -->
+        <div class="flex items-center gap-4 mb-4">
+          <div class="flex items-center border border-ink/20 rounded-petal-sm">
+            <button (click)="decrementQty()" class="w-10 h-11 font-body text-lg">&minus;</button>
+            <span class="w-10 text-center font-body">{{ quantity() }}</span>
+            <button (click)="incrementQty()" class="w-10 h-11 font-body text-lg">+</button>
+          </div>
+          <button
+            class="btn-primary flex-1"
+            [disabled]="addingToCart() || !selectedVariant()?.inStock"
+            (click)="addToCart()"
+          >
+            {{ addingToCart() ? 'Adding…' : 'Add to Cart' }}
+          </button>
+          <button
+            (click)="toggleWishlist()"
+            class="w-11 h-11 rounded-petal-sm border border-ink/20 flex items-center justify-center shrink-0"
+            [attr.aria-label]="'Toggle wishlist'"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" [class]="wishlistService.isWishlisted(p.id) ? 'fill-wine' : 'fill-none stroke-ink stroke-2'">
+              <path d="M12 21s-6.716-4.35-9.428-8.485C.61 9.35 1.5 5 5.5 4 8 3.35 10 4.5 12 7c2-2.5 4-3.65 6.5-3 4 1 4.89 5.35 2.928 8.515C18.716 16.65 12 21 12 21z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Pincode check -->
+        <div class="border border-ink/10 rounded-petal-sm p-4 mb-6">
+          <p class="font-body font-semibold text-sm mb-2">Check delivery availability</p>
+          <div class="flex gap-2">
+            <input
+              type="text" [(ngModel)]="pincodeInput" placeholder="Enter pincode" maxlength="6"
+              class="input-field !py-2 text-sm flex-1"
+            />
+            <button (click)="checkPincode()" class="btn-secondary !px-4 !py-2 text-sm" [disabled]="checkingPincode()">
+              Check
+            </button>
+          </div>
+          @if (serviceability(); as s) {
+            @if (s.serviceable) {
+              <p class="text-sm font-body text-ink/70 mt-2">
+                ✓ Delivers to {{ s.pincode }} in ~{{ s.estimatedDeliveryDays }} days.
+                {{ s.codAvailable ? 'Cash on Delivery available.' : 'Prepaid only.' }}
+              </p>
+            } @else {
+              <p class="text-sm font-body text-wine mt-2">Sorry, we don't deliver to this pincode yet.</p>
+            }
+          }
+        </div>
+
+        @if (p.description) {
+          <div class="border-t border-ink/10 pt-6">
+            <p class="font-body font-semibold text-sm mb-2">Product Details</p>
+            <p class="font-body text-sm text-ink/70 leading-relaxed">{{ p.description }}</p>
+            @if (p.fabric) {
+              <p class="font-body text-sm text-ink/70 mt-2"><span class="font-semibold">Fabric:</span> {{ p.fabric }}</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Reviews -->
+    <div class="mt-20 max-w-3xl">
+      <h2 class="font-display text-2xl mb-6">Customer Reviews</h2>
+
+      @if (authService.isLoggedIn()) {
+        <div class="card p-6 mb-8">
+          <p class="font-body font-semibold text-sm mb-2">Write a review</p>
+          <div class="flex gap-1 mb-3">
+            @for (star of [1,2,3,4,5]; track star) {
+              <button (click)="reviewRating = star" class="text-2xl" [class]="star <= reviewRating ? 'text-gold' : 'text-ink/20'">★</button>
+            }
+          </div>
+          <textarea
+            [(ngModel)]="reviewComment" rows="3" placeholder="Share your experience with this product…"
+            class="input-field mb-3"
+          ></textarea>
+          <button class="btn-primary" [disabled]="submittingReview()" (click)="submitReview()">
+            {{ submittingReview() ? 'Submitting…' : 'Submit Review' }}
+          </button>
+        </div>
+      }
+
+      @if (reviews().length === 0) {
+        <p class="font-body text-ink/50">No reviews yet. Be the first to review this product!</p>
+      } @else {
+        <div class="space-y-6">
+          @for (review of reviews(); track review.id) {
+            <div class="border-b border-ink/10 pb-6">
+              <div class="flex items-center gap-3 mb-2">
+                <app-star-rating [value]="review.rating" [showCount]="false" [size]="14" />
+                @if (review.verifiedPurchase) {
+                  <span class="text-xs font-body font-semibold text-wine bg-blush px-2 py-0.5 rounded-petal-sm">Verified Purchase</span>
+                }
+              </div>
+              <p class="font-body font-semibold text-sm mb-1">{{ review.userFullName }}</p>
+              @if (review.comment) {
+                <p class="font-body text-sm text-ink/70">{{ review.comment }}</p>
+              }
+              @if (review.adminReply) {
+                <div class="mt-2 ml-4 pl-4 border-l-2 border-blush">
+                  <p class="font-body text-xs font-semibold text-wine mb-1">Response from Ladies Apparel</p>
+                  <p class="font-body text-sm text-ink/60">{{ review.adminReply }}</p>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Related Products -->
+    @if (relatedProducts().length > 0) {
+      <div class="mt-20">
+        <h2 class="font-display text-2xl mb-6">You May Also Like</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-10">
+          @for (related of relatedProducts(); track related.id) {
+            <app-product-card
+              [product]="related"
+              [wishlisted]="wishlistService.isWishlisted(related.id)"
+              (wishlistToggle)="toggleWishlistFor($event)"
+            />
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Recently Viewed -->
+    @if (recentlyViewed().length > 0) {
+      <div class="mt-20">
+        <h2 class="font-display text-2xl mb-6">Recently Viewed</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-10">
+          @for (item of recentlyViewed(); track item.id) {
+            <app-product-card
+              [product]="item"
+              [wishlisted]="wishlistService.isWishlisted(item.id)"
+              (wishlistToggle)="toggleWishlistFor($event)"
+            />
+          }
+        </div>
+      </div>
+    }
+  </div>
+}

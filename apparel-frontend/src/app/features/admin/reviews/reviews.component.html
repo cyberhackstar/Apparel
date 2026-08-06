@@ -1,0 +1,39 @@
+<div class="p-8 max-w-3xl">
+  <h1 class="font-display text-2xl mb-6">Pending Reviews</h1>
+
+  @if (loading()) {
+    <p class="font-body text-ink/50">Loading…</p>
+  } @else if (reviews().length === 0) {
+    <p class="font-body text-ink/50">No reviews awaiting moderation. 🎉</p>
+  } @else {
+    <div class="space-y-5">
+      @for (review of reviews(); track review.id) {
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <app-star-rating [value]="review.rating" [showCount]="false" [size]="14" />
+              @if (review.verifiedPurchase) {
+                <span class="text-xs font-body font-semibold text-wine bg-blush px-2 py-0.5 rounded-petal-sm">Verified</span>
+              }
+            </div>
+            <span class="font-body text-xs text-ink/40">{{ review.createdAt | date: 'MMM d, y' }}</span>
+          </div>
+          <p class="font-body text-sm font-semibold mb-1">{{ review.userFullName }} — {{ review.productName }}</p>
+          @if (review.comment) {
+            <p class="font-body text-sm text-ink/70 mb-3">{{ review.comment }}</p>
+          }
+
+          <div class="flex gap-3 mb-3">
+            <button (click)="moderate(review, 'APPROVED')" class="btn-primary !py-1.5 !px-4 text-xs">Approve</button>
+            <button (click)="moderate(review, 'REJECTED')" class="btn-secondary !py-1.5 !px-4 text-xs">Reject</button>
+          </div>
+
+          <div class="flex gap-2">
+            <input type="text" [(ngModel)]="replyDrafts[review.id]" placeholder="Write a reply (optional)…" class="input-field !py-2 text-sm flex-1" />
+            <button (click)="sendReply(review)" class="btn-secondary !py-2 text-sm">Reply</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

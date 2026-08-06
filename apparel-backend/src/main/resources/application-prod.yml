@@ -1,0 +1,94 @@
+server:
+  port: ${SERVER_PORT:8083}
+
+spring:
+  application:
+    name: apparel-backend
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # Use Flyway/Liquibase in production
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  cache:
+    type: redis
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME:}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expiration-ms: ${JWT_ACCESS_TOKEN_EXPIRATION:86400000}
+    refresh-token-expiration-ms: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000}
+
+  super-admin:
+    full-name: ${SUPER_ADMIN_NAME:Super Admin}
+    email: ${SUPER_ADMIN_EMAIL}
+    password: ${SUPER_ADMIN_PASSWORD}
+    phone: ${SUPER_ADMIN_PHONE:1234567890}
+
+  otp:
+    expiry-minutes: ${OTP_EXPIRY_MINUTES:10}
+    length: ${OTP_LENGTH:6}
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+  shipping:
+    free-above: ${FREE_SHIPPING_ABOVE:999}
+    flat-charge: ${FLAT_SHIPPING_CHARGE:79}
+
+  cod:
+    max-order-value: ${COD_MAX_ORDER_VALUE:5000}
+
+  returns:
+    window-days: ${RETURN_WINDOW_DAYS:7}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+
+razorpay:
+  key-id: ${RAZORPAY_KEY_ID}
+  key-secret: ${RAZORPAY_KEY_SECRET}
+  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET}
+
+logging:
+  level:
+    root: INFO
+    com.ladiesapparel: INFO

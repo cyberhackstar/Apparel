@@ -1,0 +1,40 @@
+<div class="min-h-screen flex items-center justify-center p-6 bg-ivory">
+  <div class="w-full max-w-md text-center">
+    <p class="eyebrow mb-3">Verify your email</p>
+    <h2 class="font-display text-3xl mb-2">Enter the code</h2>
+    <p class="text-ink/60 font-body mb-10">
+      We've sent a 6-digit code to <span class="font-semibold text-ink">{{ email }}</span>
+    </p>
+
+    <div class="flex justify-center gap-2 sm:gap-3 mb-8" (paste)="onPaste($event)">
+      @for (digit of digits; track $index) {
+        <input
+          #digitInput
+          type="text"
+          inputmode="numeric"
+          maxlength="1"
+          class="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-display bg-white border border-ink/15
+                 rounded-petal-sm focus:outline-none focus:border-wine focus:ring-1 focus:ring-wine"
+          [value]="digit"
+          (input)="onDigitInput($index, $event)"
+          (keydown)="onBackspace($index, $event)"
+        />
+      }
+    </div>
+
+    <button class="btn-primary w-full" [disabled]="!otpComplete || loading()" (click)="submit()">
+      {{ loading() ? 'Verifying…' : 'Verify account' }}
+    </button>
+
+    <p class="font-body text-sm text-ink/60 mt-6">
+      Didn't get the code?
+      <button class="text-wine font-semibold hover:underline disabled:opacity-50" [disabled]="resending()" (click)="resend()">
+        {{ resending() ? 'Sending…' : 'Resend code' }}
+      </button>
+    </p>
+
+    <a routerLink="/auth/register" class="block font-body text-sm text-ink/40 mt-4 hover:text-ink/60">
+      &larr; Back to sign up
+    </a>
+  </div>
+</div>

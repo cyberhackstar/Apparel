@@ -1,0 +1,39 @@
+<div class="max-w-2xl mx-auto px-6 py-20 text-center">
+  <div class="w-20 h-20 rounded-full bg-blush flex items-center justify-center mx-auto mb-6">
+    <svg width="36" height="36" viewBox="0 0 24 24" class="fill-none stroke-wine stroke-2">
+      <path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <p class="eyebrow mb-3">Order Confirmed</p>
+  <h1 class="font-display text-3xl mb-3">Thank you{{ order() ? ',' : '' }}{{ order() ? ' your order is on its way!' : '' }}</h1>
+
+  @if (order(); as o) {
+    <p class="font-body text-ink/60 mb-8">
+      Order <span class="font-semibold text-ink">{{ o.orderNumber }}</span> has been placed successfully.
+      A confirmation email is on its way to you.
+    </p>
+
+    <div class="card p-6 text-left mb-8">
+      <div class="flex justify-between font-body text-sm mb-2">
+        <span class="text-ink/60">Payment Method</span>
+        <span>{{ o.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Paid Online' }}</span>
+      </div>
+      <div class="flex justify-between font-body text-sm mb-2">
+        <span class="text-ink/60">Delivering to</span>
+        <span class="text-right">{{ o.city }}, {{ o.state }} - {{ o.pincode }}</span>
+      </div>
+      <div class="flex justify-between font-display text-lg border-t border-ink/10 mt-3 pt-3">
+        <span>Total Paid</span>
+        <span>₹{{ o.grandTotal | number: '1.0-0' }}</span>
+      </div>
+    </div>
+  }
+
+  <div class="flex gap-3 justify-center">
+    @if (order(); as o) {
+      <a [routerLink]="['/orders', o.orderNumber]" class="btn-primary">Track Order</a>
+    }
+    <a routerLink="/products" class="btn-secondary">Continue Shopping</a>
+  </div>
+</div>

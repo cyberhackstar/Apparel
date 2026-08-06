@@ -1,0 +1,49 @@
+<div class="min-h-screen flex">
+  <div class="hidden lg:flex lg:w-5/12 bg-wine text-ivory flex-col justify-between p-12 relative overflow-hidden">
+    <div class="absolute -left-24 -top-24 w-96 h-96 rounded-full bg-wine-light/30"></div>
+    <a routerLink="/" class="font-display text-2xl tracking-wide relative z-10">Ladies Apparel</a>
+    <div class="relative z-10">
+      <p class="eyebrow text-blush mb-4">Welcome back</p>
+      <h1 class="font-display text-4xl leading-tight mb-4">Good to see<br />you again.</h1>
+      <p class="font-body text-ivory/70 max-w-sm">Log in to pick up your cart, wishlist, and orders right where you left off.</p>
+    </div>
+    <p class="font-body text-xs text-ivory/50 relative z-10">&copy; 2026 Ladies Apparel</p>
+  </div>
+
+  <div class="flex-1 flex items-center justify-center p-6 sm:p-12">
+    <div class="w-full max-w-md">
+      <h2 class="font-display text-3xl mb-1">Log in</h2>
+      <p class="text-ink/60 mb-8 font-body">Enter your details to continue.</p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5">
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">Email</label>
+          <input type="email" formControlName="email" class="input-field" placeholder="you@example.com" />
+          @if (f.email.touched && f.email.invalid) {
+            <p class="input-error">Please enter a valid email.</p>
+          }
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="font-body text-sm font-medium">Password</label>
+            <a routerLink="/auth/forgot-password" class="font-body text-sm text-wine hover:underline">Forgot password?</a>
+          </div>
+          <input type="password" formControlName="password" class="input-field" placeholder="Your password" />
+          @if (f.password.touched && f.password.invalid) {
+            <p class="input-error">Please enter your password.</p>
+          }
+        </div>
+
+        <button type="submit" class="btn-primary w-full mt-2" [disabled]="loading()">
+          {{ loading() ? 'Logging in…' : 'Log in' }}
+        </button>
+      </form>
+
+      <p class="text-center font-body text-sm text-ink/60 mt-8">
+        New here?
+        <a routerLink="/auth/register" class="text-wine font-semibold hover:underline">Create an account</a>
+      </p>
+    </div>
+  </div>
+</div>

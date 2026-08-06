@@ -1,0 +1,51 @@
+<div class="p-8">
+  <h1 class="font-display text-2xl mb-6">Customers</h1>
+
+  @if (loading()) {
+    <p class="font-body text-ink/50">Loading…</p>
+  } @else {
+    <div class="card overflow-hidden">
+      <table class="w-full font-body text-sm">
+        <thead class="bg-ink/5 text-left">
+          <tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Phone</th><th class="px-4 py-3">Joined</th><th class="px-4 py-3">Status</th><th class="px-4 py-3"></th></tr>
+        </thead>
+        <tbody>
+          @for (customer of customers(); track customer.id) {
+            <tr class="border-t border-ink/5">
+              <td class="px-4 py-3">{{ customer.fullName }}</td>
+              <td class="px-4 py-3 text-ink/60">{{ customer.email }}</td>
+              <td class="px-4 py-3 text-ink/60">{{ customer.phone }}</td>
+              <td class="px-4 py-3 text-ink/60">{{ customer.createdAt | date: 'MMM d, y' }}</td>
+              <td class="px-4 py-3">
+                @if (customer.blocked) {
+                  <span class="text-xs px-2 py-1 rounded-petal-sm bg-blush text-wine">Blocked</span>
+                } @else if (!customer.enabled) {
+                  <span class="text-xs px-2 py-1 rounded-petal-sm bg-ink/5 text-ink/40">Unverified</span>
+                } @else {
+                  <span class="text-xs px-2 py-1 rounded-petal-sm bg-green-50 text-green-700">Active</span>
+                }
+              </td>
+              <td class="px-4 py-3 text-right">
+                @if (customer.blocked) {
+                  <button (click)="unblock(customer)" class="text-wine hover:underline">Unblock</button>
+                } @else {
+                  <button (click)="block(customer)" class="text-ink/40 hover:underline">Block</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="flex justify-center gap-2 mt-6">
+        @for (p of [].constructor(totalPages()); track $index) {
+          <button (click)="goToPage($index)" class="w-9 h-9 rounded-petal-sm text-sm font-body" [class]="page() === $index ? 'bg-wine text-ivory' : 'bg-white border border-ink/15'">
+            {{ $index + 1 }}
+          </button>
+        }
+      </div>
+    }
+  }
+</div>

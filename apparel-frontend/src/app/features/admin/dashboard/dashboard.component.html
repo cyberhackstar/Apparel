@@ -1,0 +1,82 @@
+<div class="p-8">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="font-display text-2xl">Dashboard</h1>
+    <button class="btn-secondary !py-2 text-sm" [disabled]="exporting()" (click)="exportOrders()">
+      {{ exporting() ? 'Exporting…' : 'Export Last 30 Days (CSV)' }}
+    </button>
+  </div>
+
+  @if (summary(); as s) {
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-10">
+      <div class="card p-5">
+        <p class="font-body text-xs text-ink/50 mb-1">Total Revenue</p>
+        <p class="font-display text-2xl">₹{{ s.totalRevenue | number: '1.0-0' }}</p>
+      </div>
+      <div class="card p-5">
+        <p class="font-body text-xs text-ink/50 mb-1">Total Orders</p>
+        <p class="font-display text-2xl">{{ s.totalOrders }}</p>
+      </div>
+      <div class="card p-5">
+        <p class="font-body text-xs text-ink/50 mb-1">Total Customers</p>
+        <p class="font-display text-2xl">{{ s.totalCustomers }}</p>
+      </div>
+      <div class="card p-5">
+        <p class="font-body text-xs text-ink/50 mb-1">Pending Orders</p>
+        <p class="font-display text-2xl text-wine">{{ s.pendingOrders }}</p>
+      </div>
+      <div class="card p-5">
+        <p class="font-body text-xs text-ink/50 mb-1">Today's Revenue</p>
+        <p class="font-display text-2xl">₹{{ s.todayRevenue | number: '1.0-0' }}</p>
+      </div>
+      <div class="card p-5">
+        <p class="font-body text-xs text-ink/50 mb-1">Today's Orders</p>
+        <p class="font-display text-2xl">{{ s.todayOrders }}</p>
+      </div>
+      <div class="card p-5">
+        <p class="font-body text-xs text-ink/50 mb-1">Cancelled Orders</p>
+        <p class="font-display text-2xl">{{ s.cancelledOrders }}</p>
+      </div>
+    </div>
+  }
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <div class="card p-6">
+      <h2 class="font-display text-lg mb-4">Top Selling Products</h2>
+      @if (topProducts().length === 0) {
+        <p class="font-body text-sm text-ink/50">No sales data yet.</p>
+      } @else {
+        <table class="w-full font-body text-sm">
+          <tbody>
+            @for (p of topProducts(); track p.productId) {
+              <tr class="border-b border-ink/5 last:border-0">
+                <td class="py-2">{{ p.productName }}</td>
+                <td class="py-2 text-right font-semibold">{{ p.totalSold }} sold</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    <div class="card p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-display text-lg">Low Stock Alerts</h2>
+        <a routerLink="/admin/products" class="font-body text-xs text-wine hover:underline">Manage Products</a>
+      </div>
+      @if (lowStock().length === 0) {
+        <p class="font-body text-sm text-ink/50">All variants are well-stocked.</p>
+      } @else {
+        <table class="w-full font-body text-sm">
+          <tbody>
+            @for (v of lowStock(); track v.variantId) {
+              <tr class="border-b border-ink/5 last:border-0">
+                <td class="py-2">{{ v.productName }} <span class="text-ink/40">({{ v.size }}/{{ v.color }})</span></td>
+                <td class="py-2 text-right font-semibold text-wine">{{ v.stockQuantity }} left</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+</div>

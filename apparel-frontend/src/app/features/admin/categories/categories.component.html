@@ -1,0 +1,77 @@
+<div class="p-8 max-w-4xl">
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="font-display text-2xl">Categories</h1>
+    @if (!showForm()) {
+      <button (click)="openAddForm()" class="btn-primary !py-2 text-sm">+ Add Category</button>
+    }
+  </div>
+
+  @if (showForm()) {
+    <form [formGroup]="form" (ngSubmit)="save()" class="card p-6 mb-8 space-y-4">
+      <h3 class="font-display text-lg mb-2">{{ editingId() ? 'Edit' : 'Add' }} Category</h3>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Name</label>
+        <input type="text" formControlName="name" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Description</label>
+        <textarea formControlName="description" rows="2" class="input-field"></textarea>
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Image URL</label>
+        <input type="text" formControlName="imageUrl" class="input-field" placeholder="https://…" />
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">Parent Category (optional)</label>
+          <select formControlName="parentCategoryId" class="input-field">
+            <option [ngValue]="null">— None (top-level) —</option>
+            @for (cat of categories(); track cat.id) {
+              @if (cat.id !== editingId()) {
+                <option [ngValue]="cat.id">{{ cat.name }}</option>
+              }
+            }
+          </select>
+        </div>
+        <div>
+          <label class="font-body text-sm font-medium mb-1.5 block">Display Order</label>
+          <input type="number" formControlName="displayOrder" class="input-field" />
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button type="submit" class="btn-primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save' }}</button>
+        <button type="button" (click)="showForm.set(false)" class="btn-secondary">Cancel</button>
+      </div>
+    </form>
+  }
+
+  @if (loading()) {
+    <p class="font-body text-ink/50">Loading…</p>
+  } @else {
+    <div class="card overflow-hidden">
+      <table class="w-full font-body text-sm">
+        <thead class="bg-ink/5 text-left">
+          <tr>
+            <th class="px-4 py-3">Name</th>
+            <th class="px-4 py-3">Parent</th>
+            <th class="px-4 py-3">Order</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cat of categories(); track cat.id) {
+            <tr class="border-t border-ink/5">
+              <td class="px-4 py-3">{{ cat.name }}</td>
+              <td class="px-4 py-3 text-ink/50">{{ cat.parentCategoryName || '—' }}</td>
+              <td class="px-4 py-3">{{ cat.displayOrder }}</td>
+              <td class="px-4 py-3 text-right">
+                <button (click)="openEditForm(cat)" class="text-wine hover:underline mr-3">Edit</button>
+                <button (click)="deactivate(cat.id)" class="text-ink/40 hover:underline">Deactivate</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

@@ -1,0 +1,144 @@
+<header class="bg-ivory border-b border-ink/10 sticky top-0 z-40">
+  <!-- Top bar -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-6">
+    <button class="lg:hidden" (click)="mobileMenuOpen.set(!mobileMenuOpen())" aria-label="Menu">
+      <svg width="24" height="24" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
+        <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
+      </svg>
+    </button>
+
+    <a routerLink="/" class="font-display text-2xl text-wine shrink-0">Ladies Apparel</a>
+
+    <!-- Search -->
+    <div class="hidden md:flex flex-1 max-w-md">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keydown.enter)="onSearch()"
+        placeholder="Search for kurtis, sarees, dresses…"
+        class="w-full bg-white border border-ink/15 rounded-petal-sm px-4 py-2 text-sm font-body
+               focus:outline-none focus:border-wine focus:ring-1 focus:ring-wine"
+      />
+    </div>
+
+    <div class="flex items-center gap-4 ml-auto">
+      <!-- Wishlist -->
+      <a routerLink="/wishlist" class="relative" aria-label="Wishlist">
+        <svg width="22" height="22" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
+          <path d="M12 21s-6.716-4.35-9.428-8.485C.61 9.35 1.5 5 5.5 4 8 3.35 10 4.5 12 7c2-2.5 4-3.65 6.5-3 4 1 4.89 5.35 2.928 8.515C18.716 16.65 12 21 12 21z"/>
+        </svg>
+        @if (wishlistService.count() > 0) {
+          <span class="absolute -top-2 -right-2 bg-wine text-ivory text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+            {{ wishlistService.count() }}
+          </span>
+        }
+      </a>
+
+      <!-- Cart -->
+      <a routerLink="/cart" class="relative" aria-label="Cart">
+        <svg width="22" height="22" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
+          <path d="M6 6h15l-1.5 9h-12z" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/>
+          <path d="M6 6L5 3H2" stroke-linecap="round"/>
+        </svg>
+        @if (cartService.itemCount() > 0) {
+          <span class="absolute -top-2 -right-2 bg-wine text-ivory text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+            {{ cartService.itemCount() }}
+          </span>
+        }
+      </a>
+
+      <!-- Notifications -->
+      @if (authService.isLoggedIn()) {
+        <div class="relative">
+          <button (click)="toggleNotifications()" class="relative" aria-label="Notifications">
+            <svg width="22" height="22" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
+              <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0" stroke-linecap="round"/>
+            </svg>
+            @if (notificationService.unreadCount() > 0) {
+              <span class="absolute -top-2 -right-2 bg-wine text-ivory text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {{ notificationService.unreadCount() }}
+              </span>
+            }
+          </button>
+          @if (notificationsOpen()) {
+            <div class="absolute right-0 mt-3 w-80 bg-white rounded-petal-sm shadow-cardHover py-2 font-body text-sm max-h-96 overflow-y-auto">
+              <div class="flex items-center justify-between px-4 py-2 border-b border-ink/10">
+                <p class="font-semibold">Notifications</p>
+                <button (click)="markAllNotificationsRead()" class="text-xs text-wine hover:underline">Mark all read</button>
+              </div>
+              @if (notificationService.notifications().length === 0) {
+                <p class="px-4 py-6 text-center text-ink/40 text-xs">No notifications yet</p>
+              } @else {
+                @for (n of notificationService.notifications(); track n.id) {
+                  <button
+                    (click)="onNotificationClick(n)"
+                    class="block w-full text-left px-4 py-3 hover:bg-blush border-b border-ink/5 last:border-0"
+                    [class.bg-blush]="!n.read"
+                  >
+                    <p class="font-semibold text-xs">{{ n.title }}</p>
+                    <p class="text-xs text-ink/60 mt-0.5">{{ n.message }}</p>
+                  </button>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Account -->
+      <div class="relative">
+        @if (authService.isLoggedIn()) {
+          <button (click)="accountMenuOpen.set(!accountMenuOpen())" class="flex items-center gap-1.5" aria-label="Account menu">
+            <svg width="22" height="22" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
+              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6" stroke-linecap="round"/>
+            </svg>
+          </button>
+          @if (accountMenuOpen()) {
+            <div class="absolute right-0 mt-3 w-48 bg-white rounded-petal-sm shadow-cardHover py-2 font-body text-sm">
+              <p class="px-4 py-2 text-ink/50 border-b border-ink/10 truncate">{{ authService.currentUser()?.fullName }}</p>
+              <a routerLink="/orders" (click)="accountMenuOpen.set(false)" class="block px-4 py-2 hover:bg-blush">My Orders</a>
+              <a routerLink="/wishlist" (click)="accountMenuOpen.set(false)" class="block px-4 py-2 hover:bg-blush">Wishlist</a>
+              <a routerLink="/account/addresses" (click)="accountMenuOpen.set(false)" class="block px-4 py-2 hover:bg-blush">Addresses</a>
+              @if (authService.isAdmin()) {
+                <a routerLink="/admin" (click)="accountMenuOpen.set(false)" class="block px-4 py-2 hover:bg-blush">Admin Panel</a>
+              }
+              <button (click)="logout()" class="block w-full text-left px-4 py-2 text-wine hover:bg-blush">Log out</button>
+            </div>
+          }
+        } @else {
+          <a routerLink="/auth/login" class="font-body text-sm font-semibold text-ink hover:text-wine">Log in</a>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Category nav -->
+  <nav class="hidden lg:block border-t border-ink/10">
+    <div class="max-w-7xl mx-auto px-6 flex items-center gap-8 py-2.5">
+      @for (cat of categories(); track cat.id) {
+        <a [routerLink]="['/products']" [queryParams]="{ categoryId: cat.id }"
+           class="font-body text-sm text-ink/70 hover:text-wine transition-colors">
+          {{ cat.name }}
+        </a>
+      }
+    </div>
+  </nav>
+
+  <!-- Mobile menu -->
+  @if (mobileMenuOpen()) {
+    <div class="lg:hidden border-t border-ink/10 px-4 py-4 space-y-3">
+      <input
+        type="text" [(ngModel)]="searchTerm" (keydown.enter)="onSearch()"
+        placeholder="Search…" class="input-field text-sm"
+      />
+      @for (cat of categories(); track cat.id) {
+        <a [routerLink]="['/products']" [queryParams]="{ categoryId: cat.id }"
+           (click)="mobileMenuOpen.set(false)" class="block font-body text-sm py-1">
+          {{ cat.name }}
+        </a>
+      }
+    </div>
+  }
+</header>

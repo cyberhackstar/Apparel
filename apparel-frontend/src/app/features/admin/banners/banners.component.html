@@ -1,0 +1,56 @@
+<div class="p-8 max-w-4xl">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="font-display text-2xl">Homepage Banners</h1>
+    @if (!showForm()) {
+      <button (click)="showForm.set(true)" class="btn-primary !py-2 text-sm">+ Add Banner</button>
+    }
+  </div>
+
+  @if (showForm()) {
+    <div class="card p-6 mb-8 space-y-4">
+      <h3 class="font-display text-lg">Add Banner</h3>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Title</label>
+        <input type="text" [(ngModel)]="newTitle" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Link URL (optional — e.g. /products?categoryId=1)</label>
+        <input type="text" [(ngModel)]="newLinkUrl" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Display Order</label>
+        <input type="number" [(ngModel)]="newDisplayOrder" class="input-field" />
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Image</label>
+        <input type="file" accept="image/*" (change)="onFileSelected($event)" class="font-body text-sm" />
+      </div>
+      <div class="flex gap-3">
+        <button (click)="save()" class="btn-primary" [disabled]="saving()">{{ saving() ? 'Uploading…' : 'Save Banner' }}</button>
+        <button (click)="showForm.set(false)" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (!loading()) {
+    <div class="grid sm:grid-cols-2 gap-5">
+      @for (banner of banners(); track banner.id) {
+        <div class="card overflow-hidden">
+          <img [src]="banner.imageUrl" [alt]="banner.title" class="w-full aspect-[21/7] object-cover" />
+          <div class="p-4 flex items-center justify-between">
+            <div>
+              <p class="font-body font-semibold text-sm">{{ banner.title }}</p>
+              <p class="font-body text-xs text-ink/40">Order: {{ banner.displayOrder }}</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button (click)="toggleActive(banner)" class="font-body text-xs" [class]="banner.active ? 'text-green-700' : 'text-ink/40'">
+                {{ banner.active ? 'Active' : 'Inactive' }}
+              </button>
+              <button (click)="delete(banner.id)" class="font-body text-xs text-wine hover:underline">Delete</button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

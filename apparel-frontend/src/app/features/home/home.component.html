@@ -1,0 +1,110 @@
+<!-- Hero banner -->
+@if (banners().length > 0) {
+  <section class="relative">
+    <div class="relative aspect-[16/7] md:aspect-[21/7] overflow-hidden bg-blush">
+      @for (banner of banners(); track banner.id; let i = $index) {
+        <button
+          type="button"
+          (click)="onBannerClick(banner)"
+          class="absolute inset-0 w-full h-full transition-opacity duration-700"
+          [class.opacity-100]="activeSlide() === i"
+          [class.opacity-0]="activeSlide() !== i"
+          [class.pointer-events-none]="activeSlide() !== i"
+        >
+          <img [src]="banner.imageUrl" [alt]="banner.title" class="w-full h-full object-cover" />
+        </button>
+      }
+    </div>
+    @if (banners().length > 1) {
+      <div class="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
+        @for (banner of banners(); track banner.id; let i = $index) {
+          <button
+            (click)="goToSlide(i)"
+            class="w-2 h-2 rounded-full transition-all"
+            [class]="activeSlide() === i ? 'bg-wine w-6' : 'bg-white/70'"
+            [attr.aria-label]="'Go to slide ' + (i + 1)"
+          ></button>
+        }
+      </div>
+    }
+  </section>
+} @else {
+  <section class="bg-wine text-ivory">
+    <div class="max-w-7xl mx-auto px-6 py-24 text-center">
+      <p class="eyebrow text-blush mb-4">New season, new stories</p>
+      <h1 class="font-display text-4xl md:text-5xl mb-4">Ethnic &amp; western wear,<br />made to be lived in.</h1>
+      <a routerLink="/products" class="btn-primary bg-ivory text-wine hover:bg-blush inline-flex mt-4">Shop the collection</a>
+    </div>
+  </section>
+}
+
+<!-- Shop by category -->
+@if (categories().length > 0) {
+  <section class="max-w-7xl mx-auto px-6 py-16">
+    <p class="eyebrow mb-2">Curated for you</p>
+    <h2 class="font-display text-3xl mb-8">Shop by Category</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+      @for (cat of categories(); track cat.id) {
+        <a [routerLink]="['/products']" [queryParams]="{ categoryId: cat.id }" class="group block">
+          <div class="relative rounded-petal overflow-hidden aspect-square bg-blush mb-3">
+            <img
+              [src]="cat.imageUrl || 'https://placehold.co/400x400/F1DDE0/7A2E38?text=' + cat.name"
+              [alt]="cat.name"
+              loading="lazy"
+              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
+          <p class="font-display text-center text-lg group-hover:text-wine transition-colors">{{ cat.name }}</p>
+        </a>
+      }
+    </div>
+  </section>
+}
+
+<!-- New arrivals -->
+@if (newArrivals().length > 0) {
+  <section class="max-w-7xl mx-auto px-6 py-16">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <p class="eyebrow mb-2">Fresh off the rack</p>
+        <h2 class="font-display text-3xl">New Arrivals</h2>
+      </div>
+      <a routerLink="/products" [queryParams]="{ sortBy: 'createdAt' }" class="font-body text-sm font-semibold text-wine hover:underline">
+        View all &rarr;
+      </a>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-10">
+      @for (product of newArrivals(); track product.id) {
+        <app-product-card
+          [product]="product"
+          [wishlisted]="wishlistService.isWishlisted(product.id)"
+          (wishlistToggle)="toggleWishlist($event)"
+        />
+      }
+    </div>
+  </section>
+}
+
+<!-- Bestsellers -->
+@if (bestsellers().length > 0) {
+  <section class="max-w-7xl mx-auto px-6 py-16 bg-blush/30 rounded-petal">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <p class="eyebrow mb-2">Loved by many</p>
+        <h2 class="font-display text-3xl">Bestsellers</h2>
+      </div>
+      <a routerLink="/products" [queryParams]="{ sortBy: 'ratingCount' }" class="font-body text-sm font-semibold text-wine hover:underline">
+        View all &rarr;
+      </a>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-10">
+      @for (product of bestsellers(); track product.id) {
+        <app-product-card
+          [product]="product"
+          [wishlisted]="wishlistService.isWishlisted(product.id)"
+          (wishlistToggle)="toggleWishlist($event)"
+        />
+      }
+    </div>
+  </section>
+}
