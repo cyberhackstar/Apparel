@@ -1,75 +1,38 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
 export const serverRoutes: ServerRoute[] = [
-  // =========================
-  // PRERENDER (Static Landing)
-  // =========================
-  {
-    path: '',
-    renderMode: RenderMode.Prerender,
-  },
+  // ── Dynamic routes (have URL params) → Client Side Rendering ──
+  { path: 'products/:slug', renderMode: RenderMode.Client },
+  { path: 'order-success/:orderNumber', renderMode: RenderMode.Client },
+  { path: 'orders/:orderNumber', renderMode: RenderMode.Client },
+  { path: 'admin/products/:id/edit', renderMode: RenderMode.Client },
 
-  // =========================
-  // SSR (Dynamic & SEO Pages)
-  // =========================
-  {
-    path: 'products',
-    renderMode: RenderMode.Server,
-  },
-  {
-    path: 'products/:slug',
-    renderMode: RenderMode.Server,
-  },
+  // ── Auth-protected routes → Client Side Rendering ──
+  { path: 'wishlist', renderMode: RenderMode.Client },
+  { path: 'checkout', renderMode: RenderMode.Client },
+  { path: 'orders', renderMode: RenderMode.Client },
+  { path: 'account/addresses', renderMode: RenderMode.Client },
 
-  // =========================
-  // CLIENT ONLY (Auth & User State)
-  // =========================
-  {
-    path: 'auth/**',
-    renderMode: RenderMode.Client,
-  },
-  {
-    path: 'cart',
-    renderMode: RenderMode.Client,
-  },
-  {
-    path: 'wishlist',
-    renderMode: RenderMode.Client,
-  },
-  {
-    path: 'checkout',
-    renderMode: RenderMode.Client,
-  },
-  {
-    path: 'order-success/:orderNumber',
-    renderMode: RenderMode.Client,
-  },
-  {
-    path: 'orders',
-    renderMode: RenderMode.Client,
-  },
-  {
-    path: 'orders/:orderNumber',
-    renderMode: RenderMode.Client,
-  },
-  {
-    path: 'account/**',
-    renderMode: RenderMode.Client,
-  },
+  // ── Admin routes → Client Side Rendering ──
+  { path: 'admin', renderMode: RenderMode.Client },
+  { path: 'admin/products', renderMode: RenderMode.Client },
+  { path: 'admin/products/new', renderMode: RenderMode.Client },
+  { path: 'admin/categories', renderMode: RenderMode.Client },
+  { path: 'admin/orders', renderMode: RenderMode.Client },
+  { path: 'admin/returns', renderMode: RenderMode.Client },
+  { path: 'admin/coupons', renderMode: RenderMode.Client },
+  { path: 'admin/banners', renderMode: RenderMode.Client },
+  { path: 'admin/customers', renderMode: RenderMode.Client },
+  { path: 'admin/reviews', renderMode: RenderMode.Client },
+  { path: 'admin/serviceability', renderMode: RenderMode.Client },
+  { path: 'admin/audit-logs', renderMode: RenderMode.Client },
 
-  // =========================
-  // CLIENT ONLY (Admin Panel)
-  // =========================
-  {
-    path: 'admin/**',
-    renderMode: RenderMode.Client,
-  },
+  // ── Public static routes → Prerender at build time ──
+  { path: '', renderMode: RenderMode.Prerender },
+  { path: 'products', renderMode: RenderMode.Prerender },
+  { path: 'cart', renderMode: RenderMode.Prerender },
+  { path: 'auth', renderMode: RenderMode.Client },
 
-  // =========================
-  // FALLBACK
-  // =========================
-  {
-    path: '**',
-    renderMode: RenderMode.Server,
-  },
+  // ── Fallback ──
+  { path: '**', renderMode: RenderMode.Client },
 ];
