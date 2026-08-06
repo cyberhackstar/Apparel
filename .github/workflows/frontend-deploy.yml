@@ -3,6 +3,8 @@ name: Build & Deploy Apparel Frontend
 on:
   push:
     branches: ["main"]
+    paths:
+      - "apparel-frontend/**"
 
 jobs:
   build-and-deploy:
