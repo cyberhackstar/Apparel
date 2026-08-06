@@ -1,6 +1,8 @@
 <div class="p-8">
   <h1 class="font-display text-2xl mb-2">Audit Logs</h1>
-  <p class="font-body text-sm text-ink/50 mb-6">Every state-changing admin action — who did what, when.</p>
+  <p class="font-body text-sm text-ink/50 mb-6">
+    Every state-changing admin action — who did what, when..
+  </p>
 
   @if (loading()) {
     <p class="font-body text-ink/50">Loading…</p>
@@ -8,13 +10,25 @@
     <div class="card overflow-hidden">
       <table class="w-full font-body text-sm">
         <thead class="bg-ink/5 text-left">
-          <tr><th class="px-4 py-3">Admin</th><th class="px-4 py-3">Method</th><th class="px-4 py-3">Path</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Time</th></tr>
+          <tr>
+            <th class="px-4 py-3">Admin</th>
+            <th class="px-4 py-3">Method</th>
+            <th class="px-4 py-3">Path</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Time</th>
+          </tr>
         </thead>
         <tbody>
           @for (log of logs(); track log.id) {
             <tr class="border-t border-ink/5">
               <td class="px-4 py-3">{{ log.adminEmail }}</td>
-              <td class="px-4 py-3"><span class="text-xs px-2 py-1 rounded-petal-sm" [class]="methodColor(log.httpMethod)">{{ log.httpMethod }}</span></td>
+              <td class="px-4 py-3">
+                <span
+                  class="text-xs px-2 py-1 rounded-petal-sm"
+                  [class]="methodColor(log.httpMethod)"
+                  >{{ log.httpMethod }}</span
+                >
+              </td>
               <td class="px-4 py-3 text-ink/60 font-mono text-xs">{{ log.path }}</td>
               <td class="px-4 py-3">{{ log.statusCode }}</td>
               <td class="px-4 py-3 text-ink/50">{{ log.timestamp | date: 'MMM d, h:mm:ss a' }}</td>
@@ -27,7 +41,11 @@
     @if (totalPages() > 1) {
       <div class="flex justify-center gap-2 mt-6">
         @for (p of [].constructor(totalPages()); track $index) {
-          <button (click)="goToPage($index)" class="w-9 h-9 rounded-petal-sm text-sm font-body" [class]="page() === $index ? 'bg-wine text-ivory' : 'bg-white border border-ink/15'">
+          <button
+            (click)="goToPage($index)"
+            class="w-9 h-9 rounded-petal-sm text-sm font-body"
+            [class]="page() === $index ? 'bg-wine text-ivory' : 'bg-white border border-ink/15'"
+          >
             {{ $index + 1 }}
           </button>
         }

@@ -51,6 +51,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("OTP sent to your email for password reset."));
     }
 
+    // passord reset
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Object>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);

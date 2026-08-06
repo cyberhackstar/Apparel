@@ -1,0 +1,37 @@
+name: Build & Deploy Apparel Frontend
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+          cache-dependency-path: apparel-frontend/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: ./apparel-frontend
+
+      - name: Build Angular
+        run: yarn build --configuration production
+        working-directory: ./apparel-frontend
+
+      - name: Deploy to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: "apparel-frontend/dist/apparel-frontend/browser/*"
+          target: "/var/www/apparel"
+          strip_components: 4
