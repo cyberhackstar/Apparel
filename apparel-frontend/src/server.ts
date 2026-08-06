@@ -66,16 +66,13 @@
 //  * Request handler used by the Angular CLI (for dev-server and during build) or Firebase Cloud Functions.
 //  */
 // export const reqHandler = createNodeRequestHandler(app);
-
 import { AngularAppEngine, createRequestHandler } from '@angular/ssr';
-import { getContext } from '@netlify/angular-runtime/app-engine';
 
 const angularAppEngine = new AngularAppEngine();
 
 export async function netlifyAppEngineHandler(request: Request): Promise<Response> {
   try {
-    const ctx = getContext();
-    const result = await angularAppEngine.handle(request, ctx);
+    const result = await angularAppEngine.handle(request);
     return result || new Response('Not found', { status: 404 });
   } catch (error) {
     console.error('SSR Error:', error);

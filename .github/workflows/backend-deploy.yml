@@ -33,7 +33,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./apparel-backend
-          file: ./apparel-backend/DOCKERFILE
+          file: ./apparel-backend/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/electromart-backend:latest
+          tags: ghcr.io/${{ github.repository_owner }}/apparel-backend:latest
