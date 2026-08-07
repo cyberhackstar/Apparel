@@ -6,7 +6,13 @@ import com.ladiesapparel.email.EmailService;
 import com.ladiesapparel.otp.OtpPurpose;
 import com.ladiesapparel.otp.OtpService;
 import com.ladiesapparel.security.JwtUtil;
+import com.ladiesapparel.sms.SmsService;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +35,10 @@ public class AuthService {
     private final OtpService otpService;
     private final EmailService emailService;
     private final RefreshTokenService refreshTokenService;
+    private final SmsService smsService;
+
+    @Value("${google.client-id:}")
+    private String googleClientId;
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
     private static final int LOCKOUT_MINUTES = 15;
@@ -51,6 +62,7 @@ public class AuthService {
 
         String otp = otpService.generateOtp(request.getEmail(), OtpPurpose.REGISTER);
         emailService.sendOtpEmail(request.getEmail(), otp, "Account Verification");
+        smsService.sendOtpSms(request.getPhone(), otp);
     }
 
     @Transactional
@@ -77,6 +89,7 @@ public class AuthService {
         String otp = otpService.generateOtp(user.getEmail(), purpose);
         String label = purpose == OtpPurpose.REGISTER ? "Account Verification" : "Password Reset";
         emailService.sendOtpEmail(user.getEmail(), otp, label);
+        smsService.sendOtpSms(user.getPhone(), otp);
     }
 
     @Transactional
@@ -103,7 +116,7 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         } catch (BadCredentialsException ex) {
             registerFailedLoginAttempt(user);
-            throw ex; // handled globally -> "Invalid email or password"..
+            throw ex; // handled globally -> "Invalid email or password"
         }
 
         // successful login — reset lockout counters
@@ -120,8 +133,7 @@ public class AuthService {
     public AuthResponse refreshAccessToken(RefreshTokenRequest request) {
         User user = refreshTokenService.verifyAndRotate(request.getRefreshToken());
         String newAccessToken = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-        // keep the same refresh token alive until it naturally expires (simple rotation
-        // policy)
+        // keep the same refresh token alive until it naturally expires (simple rotation policy)
         return buildAuthResponse(user, newAccessToken, request.getRefreshToken());
     }
 
@@ -131,6 +143,7 @@ public class AuthService {
 
         String otp = otpService.generateOtp(user.getEmail(), OtpPurpose.FORGOT_PASSWORD);
         emailService.sendOtpEmail(user.getEmail(), otp, "Password Reset");
+        smsService.sendOtpSms(user.getPhone(), otp);
     }
 
     @Transactional
@@ -141,7 +154,7 @@ public class AuthService {
         otpService.validateOtp(request.getEmail(), request.getOtp(), OtpPurpose.FORGOT_PASSWORD);
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        // a password reset is a good moment to also clear any lockout state..
+        // a password reset is a good moment to also clear any lockout state
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);
         userRepository.save(user);
@@ -154,6 +167,61 @@ public class AuthService {
             user.setLockedUntil(Instant.now().plus(LOCKOUT_MINUTES, ChronoUnit.MINUTES));
         }
         userRepository.save(user);
+    }
+
+    @Transactional
+    public AuthResponse loginWithGoogle(GoogleLoginRequest request) {
+        if (googleClientId == null || googleClientId.isBlank()) {
+            throw ApiException.badRequest("Google Sign-In is not configured on this server");
+        }
+
+        GoogleIdToken.Payload payload = verifyGoogleIdToken(request.getIdToken());
+        String email = payload.getEmail();
+        String name = (String) payload.get("name");
+
+        if (email == null || Boolean.FALSE.equals(payload.getEmailVerified())) {
+            throw ApiException.badRequest("Google account email could not be verified");
+        }
+
+        User user = userRepository.findByEmail(email).orElseGet(() -> {
+            // Google already verifies the email, so the account is enabled immediately.
+            // Password is unusable (random hash) — this user can only ever log in via Google
+            // unless they later use "forgot password" to set one.
+            User newUser = User.builder()
+                    .fullName(name != null ? name : email)
+                    .email(email)
+                    .password(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                    .role(Role.CUSTOMER)
+                    .enabled(true)
+                    .build();
+            return userRepository.save(newUser);
+        });
+
+        if (user.isBlocked()) {
+            throw ApiException.unauthorized("Your account has been blocked. Please contact support.");
+        }
+
+        String accessToken = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        String refreshToken = refreshTokenService.createRefreshToken(user);
+        return buildAuthResponse(user, accessToken, refreshToken);
+    }
+
+    private GoogleIdToken.Payload verifyGoogleIdToken(String idTokenString) {
+        try {
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                    .setAudience(Collections.singletonList(googleClientId))
+                    .build();
+
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+            if (idToken == null) {
+                throw ApiException.unauthorized("Invalid Google sign-in token");
+            }
+            return idToken.getPayload();
+        } catch (ApiException e) {
+            throw e;
+        } catch (Exception e) {
+            throw ApiException.unauthorized("Google sign-in verification failed: " + e.getMessage());
+        }
     }
 
     private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {

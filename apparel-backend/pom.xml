@@ -65,6 +65,12 @@
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- Google Sign-In (ID token verification) -->
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>2.7.0</version>
+        </dependency>
         <!--  Redis (caching + distributed rate limiting)  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

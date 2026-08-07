@@ -31,6 +31,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
        Optional<Order> findByOrderNumberAndUserId(String orderNumber, Long userId);
 
+       Page<Order> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
        boolean existsByOrderNumber(String orderNumber);
 
        long countByStatus(OrderStatus status);

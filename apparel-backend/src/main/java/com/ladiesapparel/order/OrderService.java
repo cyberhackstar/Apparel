@@ -17,6 +17,7 @@ import com.ladiesapparel.order.dto.*;
 import com.ladiesapparel.product.ProductImage;
 import com.ladiesapparel.product.ProductVariant;
 import com.ladiesapparel.product.ProductVariantRepository;
+import com.ladiesapparel.sms.SmsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
@@ -48,6 +49,7 @@ public class OrderService {
         private final CouponService couponService;
         private final EmailService emailService;
         private final NotificationService notificationService;
+        private final SmsService smsService;
         private final AuthenticatedUserProvider authenticatedUserProvider;
 
         @Value("${app.shipping.free-above:999}")
@@ -91,6 +93,7 @@ public class OrderService {
                         }
                 }
 
+                // 2) Compute pricing
                 BigDecimal subtotal = cart.getItems().stream()
                                 .map(this::lineTotal)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -114,12 +117,14 @@ public class OrderService {
 
                 BigDecimal grandTotal = amountAfterDiscount.add(shippingCharge);
 
+                // 3) COD eligibility check
                 if (request.getPaymentMethod() == PaymentMethod.COD && grandTotal.compareTo(codMaxOrderValue) > 0) {
                         throw ApiException.badRequest(
                                         "Cash on Delivery is not available for orders above Rs. " + codMaxOrderValue +
                                                         ". Please choose online payment.");
                 }
 
+                // 4) Create the order + snapshot items, deduct stock
                 Order order = Order.builder()
                                 .orderNumber(generateUniqueOrderNumber())
                                 .user(user)
@@ -139,6 +144,10 @@ public class OrderService {
                                 .grandTotal(grandTotal)
                                 .status(OrderStatus.PLACED)
                                 .paymentMethod(request.getPaymentMethod())
+                                // Actual gateway verification happens via /api/payments/razorpay/verify +
+                                // webhook
+                                // (Payments module). COD flips to PAID automatically when marked DELIVERED
+                                // below.
                                 .paymentStatus(PaymentStatus.PENDING)
                                 .build();
 
@@ -158,6 +167,7 @@ public class OrderService {
 
                                         BigDecimal unitPrice = product.getBasePrice().add(variant.getAdditionalPrice());
 
+                                        // deduct stock now
                                         variant.setStockQuantity(variant.getStockQuantity() - item.getQuantity());
                                         variantRepository.save(variant);
 
@@ -180,6 +190,7 @@ public class OrderService {
                 order.setItems(orderItems);
                 orderRepository.save(order);
 
+                // 5) Record coupon usage, clear cart, send confirmation email
                 if (appliedCouponCode != null) {
                         couponService.recordUsage(appliedCouponCode, user, order.getOrderNumber());
                 }
@@ -188,6 +199,8 @@ public class OrderService {
                 cartRepository.save(cart);
 
                 emailService.sendOrderConfirmationEmail(user.getEmail(), order.getOrderNumber(), grandTotal.toString());
+                smsService.sendSms(order.getRecipientPhone(), "Your Ladies Apparel order " + order.getOrderNumber()
+                                + " for Rs. " + grandTotal + " has been placed.");
                 notificationService.create(user, "Order Placed",
                                 "Your order " + order.getOrderNumber() + " has been placed successfully.",
                                 NotificationType.ORDER_UPDATE, "/orders/" + order.getOrderNumber());
@@ -209,6 +222,7 @@ public class OrderService {
                         throw ApiException.badRequest("This order can no longer be cancelled");
                 }
 
+                // restore stock
                 for (OrderItem item : order.getItems()) {
                         ProductVariant variant = item.getProductVariant();
                         variant.setStockQuantity(variant.getStockQuantity() + item.getQuantity());
@@ -216,6 +230,9 @@ public class OrderService {
                 }
 
                 order.setStatus(OrderStatus.CANCELLED);
+                // Note: if paymentStatus was PAID (Razorpay), trigger a refund via
+                // POST /api/admin/payments/refund/{orderNumber} — not done automatically here
+                // so an admin can review before money moves.
                 orderRepository.save(order);
 
                 emailService.sendOrderStatusUpdateEmail(user.getEmail(), order.getOrderNumber(), "Cancelled");
@@ -278,22 +295,28 @@ public class OrderService {
 
                 order.setStatus(newStatus);
 
+                // Cash collected at the doorstep — COD orders are only "paid" once actually
+                // delivered.
                 if (newStatus == OrderStatus.DELIVERED
                                 && order.getPaymentMethod() == PaymentMethod.COD
                                 && order.getPaymentStatus() == PaymentStatus.PENDING) {
                         order.setPaymentStatus(PaymentStatus.PAID);
                 }
 
+                // marks the start of the return/exchange eligibility window
                 if (newStatus == OrderStatus.DELIVERED) {
                         order.setDeliveredAt(Instant.now());
                 }
 
                 orderRepository.save(order);
 
+                // Keep the customer in the loop for the milestones that actually matter to them
                 if (newStatus == OrderStatus.SHIPPED || newStatus == OrderStatus.OUT_FOR_DELIVERY
                                 || newStatus == OrderStatus.DELIVERED || newStatus == OrderStatus.CANCELLED) {
                         emailService.sendOrderStatusUpdateEmail(order.getUser().getEmail(), order.getOrderNumber(),
                                         newStatus.name());
+                        smsService.sendOrderStatusSms(order.getRecipientPhone(), order.getOrderNumber(),
+                                        newStatus.name().replace('_', ' '));
                         notificationService.create(order.getUser(), "Order Update",
                                         "Your order " + order.getOrderNumber() + " is now "
                                                         + newStatus.name().replace('_', ' ') + ".",
@@ -303,12 +326,18 @@ public class OrderService {
                 return toResponse(order);
         }
 
+        // ---------- Helpers ----------
+
         private BigDecimal lineTotal(CartItem item) {
                 ProductVariant variant = item.getProductVariant();
                 BigDecimal unitPrice = variant.getProduct().getBasePrice().add(variant.getAdditionalPrice());
                 return unitPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
         }
 
+        /**
+         * Extracts the GST portion of a line total, assuming basePrice is
+         * GST-inclusive. Informational only — not added to grandTotal.
+         */
         private BigDecimal gstPortionOfLine(CartItem item) {
                 BigDecimal line = lineTotal(item);
                 BigDecimal gstPercent = item.getProductVariant().getProduct().getGstPercentage();

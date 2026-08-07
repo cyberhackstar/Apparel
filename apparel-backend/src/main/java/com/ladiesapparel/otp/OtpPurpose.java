@@ -2,5 +2,6 @@ package com.ladiesapparel.otp;
 
 public enum OtpPurpose {
     REGISTER,
-    FORGOT_PASSWORD
+    FORGOT_PASSWORD,
+    CHANGE_EMAIL
 }
