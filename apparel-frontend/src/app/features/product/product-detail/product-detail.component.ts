@@ -19,7 +19,7 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, StarRatingComponent, ProductCardComponent],
+  imports: [CommonModule, FormsModule, StarRatingComponent, ProductCardComponent],
   templateUrl: './product-detail.component.html',
 })
 export class ProductDetailComponent implements OnInit {
@@ -60,7 +60,9 @@ export class ProductDetailComponent implements OnInit {
   selectedVariant = computed<ProductVariant | undefined>(() => {
     const p = this.product();
     if (!p) return undefined;
-    return p.variants.find((v) => v.size === this.selectedSize() && v.color === this.selectedColor());
+    return p.variants.find(
+      (v) => v.size === this.selectedSize() && v.color === this.selectedColor(),
+    );
   });
 
   constructor(
@@ -98,10 +100,14 @@ export class ProductDetailComponent implements OnInit {
 
         this.loadReviews(product.id);
 
-        this.productService.getRelated(product.id, 8).subscribe((related) => this.relatedProducts.set(related));
+        this.productService
+          .getRelated(product.id, 8)
+          .subscribe((related) => this.relatedProducts.set(related));
 
         this.recentlyViewedService.track(product.id);
-        this.recentlyViewedService.getRecentlyViewed(product.id).subscribe((items) => this.recentlyViewed.set(items));
+        this.recentlyViewedService
+          .getRecentlyViewed(product.id)
+          .subscribe((items) => this.recentlyViewed.set(items));
       },
       error: () => {
         this.loading.set(false);
@@ -111,7 +117,9 @@ export class ProductDetailComponent implements OnInit {
   }
 
   private loadReviews(productId: number): void {
-    this.reviewService.getApprovedForProduct(productId).subscribe((res) => this.reviews.set(res.content));
+    this.reviewService
+      .getApprovedForProduct(productId)
+      .subscribe((res) => this.reviews.set(res.content));
   }
 
   selectSize(size: string): void {
@@ -200,15 +208,17 @@ export class ProductDetailComponent implements OnInit {
     }
 
     this.submittingReview.set(true);
-    this.reviewService.submit({ productId: p.id, rating: this.reviewRating, comment: this.reviewComment }).subscribe({
-      next: () => {
-        this.toastr.success('Thanks! Your review has been submitted for moderation.');
-        this.reviewComment = '';
-        this.reviewRating = 5;
-        this.submittingReview.set(false);
-      },
-      error: () => this.submittingReview.set(false),
-    });
+    this.reviewService
+      .submit({ productId: p.id, rating: this.reviewRating, comment: this.reviewComment })
+      .subscribe({
+        next: () => {
+          this.toastr.success('Thanks! Your review has been submitted for moderation.');
+          this.reviewComment = '';
+          this.reviewRating = 5;
+          this.submittingReview.set(false);
+        },
+        error: () => this.submittingReview.set(false),
+      });
   }
 
   get discountedPrice(): number {
