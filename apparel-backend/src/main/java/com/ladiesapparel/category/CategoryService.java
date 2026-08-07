@@ -20,7 +20,7 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     @Transactional
-    @CacheEvict(cacheNames = {"categoryTree", "categoriesFlat"}, allEntries = true)
+    @CacheEvict(cacheNames = { "categoryTree", "categoriesFlat" }, allEntries = true)
     public CategoryResponse createCategory(CategoryRequest request) {
         Category parent = resolveParent(request.getParentCategoryId());
 
@@ -39,7 +39,7 @@ public class CategoryService {
     }
 
     @Transactional
-    @CacheEvict(cacheNames = {"categoryTree", "categoriesFlat"}, allEntries = true)
+    @CacheEvict(cacheNames = { "categoryTree", "categoriesFlat" }, allEntries = true)
     public CategoryResponse updateCategory(Long id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Category not found"));
@@ -51,7 +51,8 @@ public class CategoryService {
         category.setName(request.getName());
         category.setDescription(request.getDescription());
         category.setImageUrl(request.getImageUrl());
-        category.setDisplayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : category.getDisplayOrder());
+        category.setDisplayOrder(
+                request.getDisplayOrder() != null ? request.getDisplayOrder() : category.getDisplayOrder());
         category.setParentCategory(resolveParent(request.getParentCategoryId()));
 
         categoryRepository.save(category);
@@ -59,7 +60,7 @@ public class CategoryService {
     }
 
     @Transactional
-    @CacheEvict(cacheNames = {"categoryTree", "categoriesFlat"}, allEntries = true)
+    @CacheEvict(cacheNames = { "categoryTree", "categoriesFlat" }, allEntries = true)
     public void deactivateCategory(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Category not found"));
@@ -67,13 +68,18 @@ public class CategoryService {
         categoryRepository.save(category);
     }
 
+    @Transactional(readOnly = true)
     public CategoryResponse getById(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Category not found"));
         return toResponse(category);
     }
 
-    /** Returns top-level categories with their sub-categories nested (for menus/homepage). */
+    /**
+     * Returns top-level categories with their sub-categories nested (for
+     * menus/homepage).
+     */
+    @Transactional(readOnly = true)
     @Cacheable(cacheNames = "categoryTree")
     public List<CategoryResponse> getCategoryTree() {
         List<Category> topLevel = categoryRepository.findByParentCategoryIsNullAndActiveTrueOrderByDisplayOrderAsc();
@@ -90,6 +96,7 @@ public class CategoryService {
     }
 
     /** Flat list — used in admin panel for dropdowns etc. */
+    @Transactional(readOnly = true)
     @Cacheable(cacheNames = "categoriesFlat")
     public List<CategoryResponse> getAllActiveFlat() {
         return categoryRepository.findByActiveTrueOrderByDisplayOrderAsc()
@@ -121,7 +128,8 @@ public class CategoryService {
                 .description(category.getDescription())
                 .imageUrl(category.getImageUrl())
                 .parentCategoryId(category.getParentCategory() != null ? category.getParentCategory().getId() : null)
-                .parentCategoryName(category.getParentCategory() != null ? category.getParentCategory().getName() : null)
+                .parentCategoryName(
+                        category.getParentCategory() != null ? category.getParentCategory().getName() : null)
                 .displayOrder(category.getDisplayOrder())
                 .active(category.isActive())
                 .build();
