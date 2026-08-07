@@ -103,7 +103,7 @@ public class AuthService {
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         } catch (BadCredentialsException ex) {
             registerFailedLoginAttempt(user);
-            throw ex; // handled globally -> "Invalid email or password"
+            throw ex; // handled globally -> "Invalid email or password"..
         }
 
         // successful login — reset lockout counters
@@ -120,7 +120,8 @@ public class AuthService {
     public AuthResponse refreshAccessToken(RefreshTokenRequest request) {
         User user = refreshTokenService.verifyAndRotate(request.getRefreshToken());
         String newAccessToken = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-        // keep the same refresh token alive until it naturally expires (simple rotation policy)
+        // keep the same refresh token alive until it naturally expires (simple rotation
+        // policy)
         return buildAuthResponse(user, newAccessToken, request.getRefreshToken());
     }
 
@@ -140,7 +141,7 @@ public class AuthService {
         otpService.validateOtp(request.getEmail(), request.getOtp(), OtpPurpose.FORGOT_PASSWORD);
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        // a password reset is a good moment to also clear any lockout state
+        // a password reset is a good moment to also clear any lockout state..
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);
         userRepository.save(user);

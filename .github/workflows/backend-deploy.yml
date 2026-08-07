@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
 
-# Grant explicit permissions to publish packages to GHCR
+# Grant explicit permissions to publish packages to GHCR ok
 permissions:
   contents: read
   packages: write
