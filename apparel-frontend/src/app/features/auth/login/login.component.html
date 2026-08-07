@@ -40,6 +40,14 @@
         </button>
       </form>
 
+      <div class="flex items-center gap-3 my-6">
+        <div class="flex-1 h-px bg-ink/10"></div>
+        <span class="font-body text-xs text-ink/40">OR</span>
+        <div class="flex-1 h-px bg-ink/10"></div>
+      </div>
+
+      <app-google-signin-button />
+
       <p class="text-center font-body text-sm text-ink/60 mt-8">
         New here?
         <a routerLink="/auth/register" class="text-wine font-semibold hover:underline">Create an account</a>

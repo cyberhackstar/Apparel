@@ -1,0 +1,75 @@
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+  <h1 class="font-display text-3xl mb-8">My Profile</h1>
+
+  @if (loading()) {
+    <p class="font-body text-ink/50">Loading…</p>
+  } @else {
+    <!-- Basic info -->
+    <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="card p-6 mb-6 space-y-4">
+      <h2 class="font-display text-xl mb-2">Basic Information</h2>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Full Name</label>
+        <input type="text" formControlName="fullName" class="input-field" />
+        @if (pf.fullName.touched && pf.fullName.invalid) {
+          <p class="input-error">Please enter your full name.</p>
+        }
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Phone Number</label>
+        <input type="tel" formControlName="phone" class="input-field" />
+        @if (pf.phone.touched && pf.phone.invalid) {
+          <p class="input-error">Please enter a valid 10-digit Indian mobile number.</p>
+        }
+      </div>
+      <button type="submit" class="btn-primary" [disabled]="savingProfile()">
+        {{ savingProfile() ? 'Saving…' : 'Save Changes' }}
+      </button>
+    </form>
+
+    <!-- Email change -->
+    <div class="card p-6 mb-6">
+      <h2 class="font-display text-xl mb-2">Email Address</h2>
+      <p class="font-body text-sm text-ink/60 mb-4">Current: <span class="font-semibold text-ink">{{ profile()?.email }}</span></p>
+
+      @if (emailChangeStep() === 'idle') {
+        <div class="flex gap-2">
+          <input type="email" [(ngModel)]="newEmail" [ngModelOptions]="{standalone: true}" placeholder="New email address" class="input-field flex-1" />
+          <button (click)="requestEmailChange()" class="btn-secondary" [disabled]="requestingEmailChange()">
+            {{ requestingEmailChange() ? 'Sending…' : 'Change Email' }}
+          </button>
+        </div>
+      } @else {
+        <p class="font-body text-sm text-ink/60 mb-3">Enter the code sent to {{ newEmail }}:</p>
+        <div class="flex gap-2">
+          <input type="text" [(ngModel)]="emailOtp" [ngModelOptions]="{standalone: true}" placeholder="6-digit code" class="input-field flex-1" />
+          <button (click)="verifyEmailChange()" class="btn-primary" [disabled]="verifyingEmailChange()">
+            {{ verifyingEmailChange() ? 'Verifying…' : 'Verify & Update' }}
+          </button>
+        </div>
+        <button (click)="emailChangeStep.set('idle')" class="font-body text-xs text-ink/40 hover:underline mt-2">Cancel</button>
+      }
+    </div>
+
+    <!-- Password change -->
+    <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="card p-6 space-y-4">
+      <h2 class="font-display text-xl mb-2">Change Password</h2>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">Current Password</label>
+        <input type="password" formControlName="currentPassword" class="input-field" />
+        @if (pwf.currentPassword.touched && pwf.currentPassword.invalid) {
+          <p class="input-error">Please enter your current password.</p>
+        }
+      </div>
+      <div>
+        <label class="font-body text-sm font-medium mb-1.5 block">New Password</label>
+        <input type="password" formControlName="newPassword" class="input-field" />
+        @if (pwf.newPassword.touched && pwf.newPassword.invalid) {
+          <p class="input-error">Password must be at least 8 characters.</p>
+        }
+      </div>
+      <button type="submit" class="btn-primary" [disabled]="savingPassword()">
+        {{ savingPassword() ? 'Changing…' : 'Change Password' }}
+      </button>
+    </form>
+  }
+</div>

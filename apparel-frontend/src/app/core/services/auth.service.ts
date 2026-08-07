@@ -7,6 +7,7 @@ import { ApiResponse } from '../models/api-response.model';
 import {
   AuthResponse,
   ForgotPasswordRequest,
+  GoogleLoginRequest,
   LoginRequest,
   RefreshTokenRequest,
   RegisterRequest,
@@ -34,6 +35,8 @@ export class AuthService {
     return role === 'ADMIN' || role === 'SUPER_ADMIN';
   });
 
+  // constructor(private http: HttpClient) {}
+
   register(request: RegisterRequest): Observable<ApiResponse<null>> {
     return this.http.post<ApiResponse<null>>(`${this.baseUrl}/register`, request);
   }
@@ -49,6 +52,12 @@ export class AuthService {
   login(request: LoginRequest): Observable<ApiResponse<AuthResponse>> {
     return this.http
       .post<ApiResponse<AuthResponse>>(`${this.baseUrl}/login`, request)
+      .pipe(tap((res) => this.persistSession(res.data)));
+  }
+
+  loginWithGoogle(request: GoogleLoginRequest): Observable<ApiResponse<AuthResponse>> {
+    return this.http
+      .post<ApiResponse<AuthResponse>>(`${this.baseUrl}/google`, request)
       .pipe(tap((res) => this.persistSession(res.data)));
   }
 

@@ -1,4 +1,10 @@
-<div [class.max-w-4xl]="!selectionMode" [class.mx-auto]="!selectionMode" [class.px-4]="!selectionMode" [class.sm:px-6]="!selectionMode" [class.py-10]="!selectionMode">
+<div
+  [class.max-w-4xl]="!selectionMode"
+  [class.mx-auto]="!selectionMode"
+  [class.px-4]="!selectionMode"
+  [class.sm:px-6]="!selectionMode"
+  [class.py-10]="!selectionMode"
+>
   @if (!selectionMode) {
     <h1 class="font-display text-3xl mb-8">Your Addresses</h1>
   }
@@ -25,24 +31,43 @@
           <div class="flex-1 cursor-pointer" (click)="selectionMode ? select(address) : null">
             <div class="flex items-center gap-2 mb-1">
               <span class="font-body font-semibold text-sm">{{ address.fullName }}</span>
-              <span class="text-xs font-body bg-blush text-wine px-2 py-0.5 rounded-petal-sm">{{ address.addressType }}</span>
+              <span class="text-xs font-body bg-blush text-wine px-2 py-0.5 rounded-petal-sm">{{
+                address.addressType
+              }}</span>
               @if (address.isDefault) {
                 <span class="text-xs font-body text-ink/40">Default</span>
               }
             </div>
             <p class="font-body text-sm text-ink/70">
               {{ address.addressLine1 }}, {{ address.addressLine2 }}
-              @if (address.landmark) { , {{ address.landmark }} }
+              @if (address.landmark) {
+                , {{ address.landmark }}
+              }
               <br />{{ address.city }}, {{ address.state }} - {{ address.pincode }}
             </p>
             <p class="font-body text-sm text-ink/50 mt-1">Phone: {{ address.phone }}</p>
           </div>
 
           <div class="flex flex-col gap-2 shrink-0">
-            <button (click)="openEditForm(address)" class="font-body text-xs text-wine hover:underline">Edit</button>
+            <button
+              (click)="openEditForm(address)"
+              class="font-body text-xs text-wine hover:underline"
+            >
+              Edit
+            </button>
             @if (!address.isDefault) {
-              <button (click)="setDefault(address.id)" class="font-body text-xs text-ink/50 hover:underline">Set Default</button>
-              <button (click)="delete(address.id)" class="font-body text-xs text-ink/50 hover:underline">Delete</button>
+              <button
+                (click)="setDefault(address.id)"
+                class="font-body text-xs text-ink/50 hover:underline"
+              >
+                Set Default
+              </button>
+              <button
+                (click)="delete(address.id)"
+                class="font-body text-xs text-ink/50 hover:underline"
+              >
+                Delete
+              </button>
             }
           </div>
         </div>
@@ -59,44 +84,121 @@
       <h3 class="font-display text-xl mb-2">{{ editingId() ? 'Edit' : 'Add' }} Address</h3>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Full Name -->
         <div>
           <label class="font-body text-sm font-medium mb-1.5 block">Full Name</label>
-          <input type="text" formControlName="fullName" class="input-field" />
+          <input
+            type="text"
+            formControlName="fullName"
+            class="input-field"
+            placeholder="Priya Sharma"
+          />
+          @if (f.fullName.touched && f.fullName.invalid) {
+            <p class="input-error">Full name is required.</p>
+          }
         </div>
+
+        <!-- ✅ Phone with auto-strip leading 0 -->
         <div>
           <label class="font-body text-sm font-medium mb-1.5 block">Phone</label>
-          <input type="tel" formControlName="phone" class="input-field" />
+          <input
+            type="tel"
+            formControlName="phone"
+            class="input-field"
+            placeholder="98765 43210"
+            maxlength="11"
+            (input)="onPhoneInput($event)"
+          />
+          @if (f.phone.touched && f.phone.errors) {
+            @if (f.phone.errors['required']) {
+              <p class="input-error">Phone number is required.</p>
+            } @else if (f.phone.errors['pattern']) {
+              <p class="input-error">
+                Enter a valid 10-digit mobile number starting with 6–9. Do not include 0 or +91.
+              </p>
+            }
+          }
         </div>
       </div>
 
+      <!-- Address Line 1 -->
       <div>
         <label class="font-body text-sm font-medium mb-1.5 block">Address Line 1</label>
-        <input type="text" formControlName="addressLine1" class="input-field" />
+        <input
+          type="text"
+          formControlName="addressLine1"
+          class="input-field"
+          placeholder="House no, Street name"
+        />
+        @if (f.addressLine1.touched && f.addressLine1.invalid) {
+          <p class="input-error">Address Line 1 is required.</p>
+        }
       </div>
+
+      <!-- Address Line 2 -->
       <div>
         <label class="font-body text-sm font-medium mb-1.5 block">Address Line 2 (optional)</label>
-        <input type="text" formControlName="addressLine2" class="input-field" />
+        <input
+          type="text"
+          formControlName="addressLine2"
+          class="input-field"
+          placeholder="Apartment, colony, area"
+        />
       </div>
+
+      <!-- Landmark -->
       <div>
         <label class="font-body text-sm font-medium mb-1.5 block">Landmark (optional)</label>
-        <input type="text" formControlName="landmark" class="input-field" />
+        <input
+          type="text"
+          formControlName="landmark"
+          class="input-field"
+          placeholder="Near bus stand, opposite temple…"
+        />
       </div>
 
       <div class="grid sm:grid-cols-3 gap-4">
+        <!-- City -->
         <div>
           <label class="font-body text-sm font-medium mb-1.5 block">City</label>
-          <input type="text" formControlName="city" class="input-field" />
+          <input type="text" formControlName="city" class="input-field" placeholder="Jaipur" />
+          @if (f.city.touched && f.city.invalid) {
+            <p class="input-error">City is required.</p>
+          }
         </div>
+
+        <!-- State -->
         <div>
           <label class="font-body text-sm font-medium mb-1.5 block">State</label>
-          <input type="text" formControlName="state" class="input-field" />
+          <input type="text" formControlName="state" class="input-field" placeholder="Rajasthan" />
+          @if (f.state.touched && f.state.invalid) {
+            <p class="input-error">State is required.</p>
+          }
         </div>
+
+        <!-- ✅ Pincode — digits only -->
         <div>
           <label class="font-body text-sm font-medium mb-1.5 block">Pincode</label>
-          <input type="text" formControlName="pincode" maxlength="6" class="input-field" />
+          <input
+            type="text"
+            formControlName="pincode"
+            class="input-field"
+            placeholder="302029"
+            maxlength="6"
+            inputmode="numeric"
+            (input)="onPincodeInput($event)"
+          />
+          @if (f.pincode.touched && f.pincode.errors) {
+            @if (f.pincode.errors['required']) {
+              <p class="input-error">Pincode is required.</p>
+            } @else if (f.pincode.errors['pattern']) {
+              <p class="input-error">Enter a valid 6-digit pincode.</p>
+            }
+          }
         </div>
       </div>
 
+      <!-- Address Type -->
       <div>
         <label class="font-body text-sm font-medium mb-1.5 block">Address Type</label>
         <select formControlName="addressType" class="input-field">
@@ -106,13 +208,16 @@
         </select>
       </div>
 
-      <label class="flex items-center gap-2 font-body text-sm">
+      <!-- Default checkbox -->
+      <label class="flex items-center gap-2 font-body text-sm cursor-pointer">
         <input type="checkbox" formControlName="isDefault" />
         Set as default address
       </label>
 
       <div class="flex gap-3 pt-2">
-        <button type="submit" class="btn-primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save Address' }}</button>
+        <button type="submit" class="btn-primary" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save Address' }}
+        </button>
         <button type="button" (click)="showForm.set(false)" class="btn-secondary">Cancel</button>
       </div>
     </form>

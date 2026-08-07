@@ -143,7 +143,13 @@ export class AdminProductFormComponent implements OnInit {
   addVariantToExisting(): void {
     const id = this.productId();
     if (!id) return;
-
+    const group = this.fb.group({
+      size: ['', Validators.required],
+      color: ['', Validators.required],
+      sku: ['', Validators.required],
+      stockQuantity: [0],
+      additionalPrice: [0],
+    });
     const size = prompt('Size (e.g. M)');
     const color = prompt('Color (e.g. Red)');
     const sku = prompt('SKU (unique code)');

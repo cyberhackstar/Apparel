@@ -12,16 +12,15 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './reset-password.component.html',
 })
 export class ResetPasswordComponent implements OnInit {
-  private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-  private readonly toastr = inject(ToastrService);
-
   loading = signal(false);
   email = '';
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private toastr = inject(ToastrService);
 
-  readonly form = this.fb.group({
+  form = this.fb.group({
     otp: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
     newPassword: ['', [Validators.required, Validators.minLength(8)]],
   });
