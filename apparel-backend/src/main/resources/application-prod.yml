@@ -88,6 +88,16 @@ razorpay:
   key-secret: ${RAZORPAY_KEY_SECRET}
   webhook-secret: ${RAZORPAY_WEBHOOK_SECRET}
 
+google:
+  client-id: ${CLIENT_ID}
+  client-secret: ${CLIENT_SECRET}
+
+msg91:
+  enabled: false # flip to true once you have a real MSG91 account — until then every SMS call is a safe no-op
+  auth-key: ${MSG91_AUTH_KEY}
+  sender-id: ${SENDER_ID} # 6-character alphanumeric sender id, must be registered with MSG91
+  route: "4"
+
 logging:
   level:
     root: INFO
