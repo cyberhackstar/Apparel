@@ -109,12 +109,11 @@ public class CartService {
         cartRepository.save(cart);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional // ← remove readOnly
     public CartResponse getCart() {
         User user = authenticatedUserProvider.getCurrentUser();
         Cart cart = cartRepository.findByUserIdWithDetails(user.getId())
-                .orElseGet(() -> createCartForUser(user));
-
+                .orElseGet(() -> createCartForUser(user)); // ← now allowed to INSERT
         return toResponse(cart);
     }
 
