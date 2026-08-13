@@ -19,70 +19,68 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class WishlistService {
 
-        private final WishlistItemRepository wishlistItemRepository;
-        private final ProductRepository productRepository;
-        private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final WishlistItemRepository wishlistItemRepository;
+    private final ProductRepository productRepository;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
-        @Transactional
-        public void addToWishlist(Long productId) {
-                User user = authenticatedUserProvider.getCurrentUser();
+    @Transactional
+    public void addToWishlist(Long productId) {
+        User user = authenticatedUserProvider.getCurrentUser();
 
-                if (wishlistItemRepository.existsByUserIdAndProductId(user.getId(), productId)) {
-                        return; // already in wishlist — no-op, keeps the endpoint idempotent
-                }
-
-                Product product = productRepository.findById(productId)
-                                .orElseThrow(() -> ApiException.notFound("Product not found"));
-
-                WishlistItem item = WishlistItem.builder()
-                                .user(user)
-                                .product(product)
-                                .build();
-
-                wishlistItemRepository.save(item);
+        if (wishlistItemRepository.existsByUserIdAndProductId(user.getId(), productId)) {
+            return; // already in wishlist — no-op, keeps the endpoint idempotent
         }
 
-        @Transactional
-        public void removeFromWishlist(Long productId) {
-                User user = authenticatedUserProvider.getCurrentUser();
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> ApiException.notFound("Product not found"));
 
-                WishlistItem item = wishlistItemRepository.findByUserIdAndProductId(user.getId(), productId)
-                                .orElseThrow(() -> ApiException.notFound("Item not found in wishlist"));
+        WishlistItem item = WishlistItem.builder()
+                .user(user)
+                .product(product)
+                .build();
 
-                wishlistItemRepository.delete(item);
-        }
+        wishlistItemRepository.save(item);
+    }
 
-        @Transactional(readOnly = true)
-        public List<WishlistItemResponse> getWishlist() {
-                User user = authenticatedUserProvider.getCurrentUser();
+    @Transactional
+    public void removeFromWishlist(Long productId) {
+        User user = authenticatedUserProvider.getCurrentUser();
 
-                return wishlistItemRepository.findByUserIdWithProductDetails(user.getId()).stream()
-                                .map(item -> toResponse(item.getProduct()))
-                                .collect(Collectors.toList());
-        }
+        WishlistItem item = wishlistItemRepository.findByUserIdAndProductId(user.getId(), productId)
+                .orElseThrow(() -> ApiException.notFound("Item not found in wishlist"));
 
-        private WishlistItemResponse toResponse(Product product) {
-                String imageUrl = product.getImages().stream()
-                                .filter(ProductImage::isPrimary)
-                                .findFirst()
-                                .or(() -> product.getImages().stream()
-                                                .min(Comparator.comparing(ProductImage::getDisplayOrder)))
-                                .map(ProductImage::getImageUrl)
-                                .orElse(null);
+        wishlistItemRepository.delete(item);
+    }
 
-                boolean inStock = product.getVariants().stream()
-                                .anyMatch(v -> v.isActive() && v.getStockQuantity() != null
-                                                && v.getStockQuantity() > 0);
+    @Transactional(readOnly = true)
+    public List<WishlistItemResponse> getWishlist() {
+        User user = authenticatedUserProvider.getCurrentUser();
 
-                return WishlistItemResponse.builder()
-                                .productId(product.getId())
-                                .name(product.getName())
-                                .slug(product.getSlug())
-                                .imageUrl(imageUrl)
-                                .basePrice(product.getBasePrice())
-                                .mrp(product.getMrp())
-                                .discountPercentage(product.getDiscountPercentage())
-                                .inStock(inStock)
-                                .build();
-        }
+        return wishlistItemRepository.findByUserIdOrderByAddedAtDesc(user.getId()).stream()
+                .map(item -> toResponse(item.getProduct()))
+                .collect(Collectors.toList());
+    }
+
+    private WishlistItemResponse toResponse(Product product) {
+        String imageUrl = product.getImages().stream()
+                .filter(ProductImage::isPrimary)
+                .findFirst()
+                .or(() -> product.getImages().stream().min(Comparator.comparing(ProductImage::getDisplayOrder)))
+                .map(ProductImage::getImageUrl)
+                .orElse(null);
+
+        boolean inStock = product.getVariants().stream()
+                .anyMatch(v -> v.isActive() && v.getStockQuantity() != null && v.getStockQuantity() > 0);
+
+        return WishlistItemResponse.builder()
+                .productId(product.getId())
+                .name(product.getName())
+                .slug(product.getSlug())
+                .imageUrl(imageUrl)
+                .basePrice(product.getBasePrice())
+                .mrp(product.getMrp())
+                .discountPercentage(product.getDiscountPercentage())
+                .inStock(inStock)
+                .build();
+    }
 }

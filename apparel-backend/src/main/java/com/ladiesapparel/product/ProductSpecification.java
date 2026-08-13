@@ -14,19 +14,22 @@ public class ProductSpecification {
     private ProductSpecification() {
     }
 
+    /**
+     * @param active null = no filter (admin "All"), true = active only (storefront), false = inactive only
+     */
     public static Specification<Product> build(Long categoryId,
                                                 BigDecimal minPrice,
                                                 BigDecimal maxPrice,
                                                 String size,
                                                 String color,
                                                 String keyword,
-                                                boolean onlyActive) {
+                                                Boolean active) {
 
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (onlyActive) {
-                predicates.add(cb.isTrue(root.get("active")));
+            if (active != null) {
+                predicates.add(cb.equal(root.get("active"), active));
             }
 
             if (categoryId != null) {

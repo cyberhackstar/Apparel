@@ -1,89 +1,262 @@
-<div class="p-8 max-w-4xl">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="font-display text-2xl">Coupons</h1>
+<div class="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+  <!-- Top Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="font-display text-2xl sm:text-3xl text-ink">Coupons</h1>
+      <p class="font-body text-xs sm:text-sm text-ink/50 mt-1">
+        Manage discount vouchers, order thresholds, and promotional usage limits.
+      </p>
+    </div>
     @if (!showForm()) {
-      <button (click)="openAddForm()" class="btn-primary !py-2 text-sm">+ Add Coupon</button>
+      <button
+        (click)="openAddForm()"
+        class="btn-primary !py-2 text-xs sm:text-sm self-start sm:self-auto shrink-0"
+      >
+        + Add Coupon
+      </button>
     }
   </div>
 
+  <!-- Coupon Add / Edit Form -->
   @if (showForm()) {
-    <form [formGroup]="form" (ngSubmit)="save()" class="card p-6 mb-8 space-y-4">
-      <h3 class="font-display text-lg">{{ editingId() ? 'Edit' : 'Add' }} Coupon</h3>
-      <div class="grid sm:grid-cols-2 gap-4">
+    <form [formGroup]="form" (ngSubmit)="save()" class="card p-4 sm:p-6 space-y-4">
+      <h3 class="font-display text-lg sm:text-xl">{{ editingId() ? 'Edit' : 'Add' }} Coupon</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="font-body text-sm font-medium mb-1.5 block">Code</label>
-          <input type="text" formControlName="code" class="input-field uppercase" />
+          <label class="font-body text-xs sm:text-sm font-medium mb-1.5 block">Code *</label>
+          <input
+            type="text"
+            formControlName="code"
+            class="input-field uppercase"
+            placeholder="e.g. SUMMER2026"
+          />
+          @if (f.code.touched && f.code.invalid) {
+            <p class="input-error mt-1">Coupon code is required.</p>
+          }
         </div>
+
         <div>
-          <label class="font-body text-sm font-medium mb-1.5 block">Discount Type</label>
+          <label class="font-body text-xs sm:text-sm font-medium mb-1.5 block"
+            >Discount Type *</label
+          >
           <select formControlName="discountType" class="input-field">
             <option value="FLAT">Flat (₹)</option>
             <option value="PERCENTAGE">Percentage (%)</option>
           </select>
         </div>
+
         <div>
-          <label class="font-body text-sm font-medium mb-1.5 block">Discount Value</label>
-          <input type="number" formControlName="discountValue" class="input-field" />
+          <label class="font-body text-xs sm:text-sm font-medium mb-1.5 block"
+            >Discount Value *</label
+          >
+          <input
+            type="number"
+            formControlName="discountValue"
+            class="input-field"
+            placeholder="0"
+          />
+          @if (f.discountValue.touched && f.discountValue.invalid) {
+            <p class="input-error mt-1">Valid discount value is required.</p>
+          }
         </div>
+
         <div>
-          <label class="font-body text-sm font-medium mb-1.5 block">Min Order Value (₹)</label>
-          <input type="number" formControlName="minOrderValue" class="input-field" />
+          <label class="font-body text-xs sm:text-sm font-medium mb-1.5 block"
+            >Min Order Value (₹)</label
+          >
+          <input
+            type="number"
+            formControlName="minOrderValue"
+            class="input-field"
+            placeholder="0"
+          />
         </div>
+
         <div>
-          <label class="font-body text-sm font-medium mb-1.5 block">Max Discount Cap (₹, for % type)</label>
-          <input type="number" formControlName="maxDiscountAmount" class="input-field" />
+          <label class="font-body text-xs sm:text-sm font-medium mb-1.5 block"
+            >Max Discount Cap (₹, for % type)</label
+          >
+          <input
+            type="number"
+            formControlName="maxDiscountAmount"
+            class="input-field"
+            placeholder="Optional cap"
+          />
         </div>
+
         <div>
-          <label class="font-body text-sm font-medium mb-1.5 block">Usage Limit Per User</label>
-          <input type="number" formControlName="usageLimitPerUser" class="input-field" />
+          <label class="font-body text-xs sm:text-sm font-medium mb-1.5 block"
+            >Usage Limit Per User</label
+          >
+          <input
+            type="number"
+            formControlName="usageLimitPerUser"
+            class="input-field"
+            placeholder="1"
+          />
         </div>
+
         <div>
-          <label class="font-body text-sm font-medium mb-1.5 block">Total Usage Limit (blank = unlimited)</label>
-          <input type="number" formControlName="totalUsageLimit" class="input-field" />
+          <label class="font-body text-xs sm:text-sm font-medium mb-1.5 block"
+            >Total Usage Limit (blank = unlimited)</label
+          >
+          <input
+            type="number"
+            formControlName="totalUsageLimit"
+            class="input-field"
+            placeholder="Unlimited"
+          />
         </div>
+
         <div>
-          <label class="font-body text-sm font-medium mb-1.5 block">Valid From</label>
+          <label class="font-body text-xs sm:text-sm font-medium mb-1.5 block">Valid From *</label>
           <input type="datetime-local" formControlName="validFrom" class="input-field" />
+          @if (f.validFrom.touched && f.validFrom.invalid) {
+            <p class="input-error mt-1">Start date is required.</p>
+          }
         </div>
+
         <div>
-          <label class="font-body text-sm font-medium mb-1.5 block">Valid To</label>
+          <label class="font-body text-xs sm:text-sm font-medium mb-1.5 block">Valid To *</label>
           <input type="datetime-local" formControlName="validTo" class="input-field" />
+          @if (f.validTo.touched && f.validTo.invalid) {
+            <p class="input-error mt-1">Expiration date is required.</p>
+          }
         </div>
+
         <div class="sm:col-span-2">
-          <label class="font-body text-sm font-medium mb-1.5 block">Description</label>
-          <input type="text" formControlName="description" class="input-field" />
+          <label class="font-body text-xs sm:text-sm font-medium mb-1.5 block">Description</label>
+          <input
+            type="text"
+            formControlName="description"
+            class="input-field"
+            placeholder="e.g. Get 20% off on all Kurtis"
+          />
         </div>
       </div>
-      <div class="flex gap-3">
-        <button type="submit" class="btn-primary" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save' }}</button>
-        <button type="button" (click)="showForm.set(false)" class="btn-secondary">Cancel</button>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button type="submit" class="btn-primary flex-1 sm:flex-initial" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : 'Save Coupon' }}
+        </button>
+        <button
+          type="button"
+          (click)="showForm.set(false)"
+          class="btn-secondary flex-1 sm:flex-initial"
+        >
+          Cancel
+        </button>
       </div>
     </form>
   }
 
-  @if (!loading()) {
+  <!-- Coupon List -->
+  @if (loading()) {
+    <p class="font-body text-sm text-ink/50 py-8 text-center">Loading coupons…</p>
+  } @else {
     <div class="card overflow-hidden">
-      <table class="w-full font-body text-sm">
-        <thead class="bg-ink/5 text-left">
-          <tr><th class="px-4 py-3">Code</th><th class="px-4 py-3">Discount</th><th class="px-4 py-3">Used</th><th class="px-4 py-3">Valid Until</th><th class="px-4 py-3"></th></tr>
-        </thead>
-        <tbody>
-          @for (coupon of coupons(); track coupon.id) {
-            <tr class="border-t border-ink/5">
-              <td class="px-4 py-3 font-semibold">{{ coupon.code }}</td>
-              <td class="px-4 py-3">{{ coupon.discountType === 'FLAT' ? '₹' + coupon.discountValue : coupon.discountValue + '%' }}</td>
-              <td class="px-4 py-3">{{ coupon.totalUsedCount }}{{ coupon.totalUsageLimit ? ' / ' + coupon.totalUsageLimit : '' }}</td>
-              <td class="px-4 py-3 text-ink/60">{{ coupon.validTo | date: 'MMM d, y' }}</td>
-              <td class="px-4 py-3 text-right">
-                <button (click)="openEditForm(coupon)" class="text-wine hover:underline mr-3">Edit</button>
-                @if (coupon.active) {
-                  <button (click)="deactivate(coupon.id)" class="text-ink/40 hover:underline">Deactivate</button>
-                }
-              </td>
+      <!-- Desktop Table (Visible on sm and larger screens) -->
+      <div class="hidden sm:block overflow-x-auto">
+        <table class="w-full font-body text-sm">
+          <thead class="bg-ink/5 text-left">
+            <tr>
+              <th class="px-4 py-3">Code</th>
+              <th class="px-4 py-3">Discount</th>
+              <th class="px-4 py-3">Used</th>
+              <th class="px-4 py-3">Valid Until</th>
+              <th class="px-4 py-3 text-right">Actions</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y divide-ink/5">
+            @for (coupon of coupons(); track coupon.id) {
+              <tr class="hover:bg-ink/[0.02] transition-colors">
+                <td class="px-4 py-3 font-semibold text-ink font-mono tracking-wide">
+                  {{ coupon.code }}
+                </td>
+                <td class="px-4 py-3">
+                  {{
+                    coupon.discountType === 'FLAT'
+                      ? '₹' + coupon.discountValue
+                      : coupon.discountValue + '%'
+                  }}
+                </td>
+                <td class="px-4 py-3">
+                  {{ coupon.totalUsedCount
+                  }}{{ coupon.totalUsageLimit ? ' / ' + coupon.totalUsageLimit : '' }}
+                </td>
+                <td class="px-4 py-3 text-ink/60">
+                  {{ coupon.validTo | date: 'MMM d, y' }}
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <button
+                    (click)="openEditForm(coupon)"
+                    class="text-wine hover:underline mr-3 font-medium"
+                  >
+                    Edit
+                  </button>
+                  @if (coupon.active) {
+                    <button (click)="deactivate(coupon.id)" class="text-ink/40 hover:underline">
+                      Deactivate
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile List View (Visible on viewports below sm breakpoint) -->
+      <div class="sm:hidden divide-y divide-ink/5">
+        @for (coupon of coupons(); track coupon.id) {
+          <div class="p-4 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span
+                class="font-mono font-bold text-sm text-ink bg-ink/5 px-2 py-0.5 rounded tracking-wider"
+              >
+                {{ coupon.code }}
+              </span>
+              <span class="font-semibold text-sm text-wine">
+                {{
+                  coupon.discountType === 'FLAT'
+                    ? '₹' + coupon.discountValue
+                    : coupon.discountValue + '%'
+                }}
+                OFF
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 text-xs text-ink/60 gap-1 pt-1">
+              <div>
+                Usage:
+                <span class="text-ink font-medium"
+                  >{{ coupon.totalUsedCount
+                  }}{{ coupon.totalUsageLimit ? ' / ' + coupon.totalUsageLimit : '' }}</span
+                >
+              </div>
+              <div class="text-right">
+                Expires:
+                <span class="text-ink font-medium">{{ coupon.validTo | date: 'MMM d, y' }}</span>
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-4 text-xs pt-2 border-t border-ink/5">
+              <button
+                (click)="openEditForm(coupon)"
+                class="text-wine font-semibold hover:underline"
+              >
+                Edit
+              </button>
+              @if (coupon.active) {
+                <button (click)="deactivate(coupon.id)" class="text-ink/40 hover:underline">
+                  Deactivate
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
     </div>
   }
 </div>

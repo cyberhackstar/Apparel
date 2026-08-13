@@ -16,4 +16,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByParentCategoryIdAndActiveTrueOrderByDisplayOrderAsc(Long parentId);
 
     List<Category> findByActiveTrueOrderByDisplayOrderAsc();
+
+    List<Category> findAllByOrderByDisplayOrderAsc();
 }

@@ -3,23 +3,39 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse, PagedResponse } from '../models/api-response.model';
-import { Product, ProductRequest, ProductSearchParams, ProductVariantRequest } from '../models/product.model';
+import { Product, ProductRequest, ProductVariantRequest } from '../models/product.model';
+
+export type AdminProductStatus = 'ALL' | 'ACTIVE' | 'INACTIVE';
+
+export interface AdminProductSearchParams {
+  categoryId?: number;
+  keyword?: string;
+  status?: AdminProductStatus;
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
+}
 
 @Injectable({ providedIn: 'root' })
 export class AdminProductService {
   private readonly adminUrl = `${environment.apiUrl}/admin/products`;
-  private readonly publicUrl = `${environment.apiUrl}/public/products`;
 
   constructor(private http: HttpClient) {}
 
-  // reuse the public search endpoint for the admin product table too — it already supports pagination/filtering
-  list(params: ProductSearchParams): Observable<PagedResponse<Product>> {
+  /**
+   * Dedicated admin listing endpoint — deliberately NOT the public storefront one. The public
+   * endpoint always forces active=true, so re-using it here meant deactivated products became
+   * permanently invisible in the admin panel with no way to find or reactivate them. This one
+   * shows everything by default and supports an explicit status filter instead.
+   */
+  list(params: AdminProductSearchParams): Observable<PagedResponse<Product>> {
     let httpParams: any = {};
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== '') httpParams[k] = v;
     });
     return this.http
-      .get<ApiResponse<PagedResponse<Product>>>(this.publicUrl, { params: httpParams })
+      .get<ApiResponse<PagedResponse<Product>>>(this.adminUrl, { params: httpParams })
       .pipe(map((r) => r.data));
   }
 
@@ -37,6 +53,10 @@ export class AdminProductService {
 
   deactivate(id: number): Observable<void> {
     return this.http.delete<ApiResponse<null>>(`${this.adminUrl}/${id}`).pipe(map(() => undefined));
+  }
+
+  activate(id: number): Observable<void> {
+    return this.http.patch<ApiResponse<null>>(`${this.adminUrl}/${id}/activate`, {}).pipe(map(() => undefined));
   }
 
   addVariant(productId: number, variant: ProductVariantRequest): Observable<void> {

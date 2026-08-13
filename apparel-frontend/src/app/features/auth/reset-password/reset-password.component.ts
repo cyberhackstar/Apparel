@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -14,10 +14,11 @@ import { AuthService } from '../../../core/services/auth.service';
 export class ResetPasswordComponent implements OnInit {
   loading = signal(false);
   email = '';
+
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
-  private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
 
   form = this.fb.group({

@@ -1,36 +1,90 @@
-<div class="p-8 max-w-3xl">
-  <h1 class="font-display text-2xl mb-6">Pending Reviews</h1>
+<div class="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto space-y-6">
+  <!-- Top Bar -->
+  <div>
+    <h1 class="font-display text-2xl sm:text-3xl text-ink">Pending Reviews</h1>
+    <p class="font-body text-xs sm:text-sm text-ink/50 mt-1">
+      Moderate customer ratings, approve reviews for the storefront, or draft responses.
+    </p>
+  </div>
 
+  <!-- Loading State -->
   @if (loading()) {
-    <p class="font-body text-ink/50">Loading…</p>
+    <p class="font-body text-sm text-ink/50 py-8 text-center">Loading pending reviews…</p>
   } @else if (reviews().length === 0) {
-    <p class="font-body text-ink/50">No reviews awaiting moderation. 🎉</p>
+    <div class="card p-8 text-center space-y-2">
+      <p class="font-body text-base text-ink font-semibold">No reviews awaiting moderation 🎉</p>
+      <p class="font-body text-xs text-ink/50">
+        All customer reviews have been published or moderated.
+      </p>
+    </div>
   } @else {
-    <div class="space-y-5">
+    <!-- Reviews List -->
+    <div class="space-y-4 sm:space-y-5">
       @for (review of reviews(); track review.id) {
-        <div class="card p-5">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
+        <div class="card p-4 sm:p-5 space-y-3">
+          <!-- Rating & Date Header -->
+          <div
+            class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-ink/5"
+          >
+            <div class="flex items-center gap-2 flex-wrap">
               <app-star-rating [value]="review.rating" [showCount]="false" [size]="14" />
               @if (review.verifiedPurchase) {
-                <span class="text-xs font-body font-semibold text-wine bg-blush px-2 py-0.5 rounded-petal-sm">Verified</span>
+                <span
+                  class="text-[10px] sm:text-xs font-body font-semibold text-wine bg-blush px-2 py-0.5 rounded-petal-sm uppercase tracking-wider"
+                >
+                  Verified Purchase
+                </span>
               }
             </div>
-            <span class="font-body text-xs text-ink/40">{{ review.createdAt | date: 'MMM d, y' }}</span>
-          </div>
-          <p class="font-body text-sm font-semibold mb-1">{{ review.userFullName }} — {{ review.productName }}</p>
-          @if (review.comment) {
-            <p class="font-body text-sm text-ink/70 mb-3">{{ review.comment }}</p>
-          }
-
-          <div class="flex gap-3 mb-3">
-            <button (click)="moderate(review, 'APPROVED')" class="btn-primary !py-1.5 !px-4 text-xs">Approve</button>
-            <button (click)="moderate(review, 'REJECTED')" class="btn-secondary !py-1.5 !px-4 text-xs">Reject</button>
+            <span class="font-body text-xs text-ink/40 self-start sm:self-auto shrink-0">
+              {{ review.createdAt | date: 'MMM d, y' }}
+            </span>
           </div>
 
-          <div class="flex gap-2">
-            <input type="text" [(ngModel)]="replyDrafts[review.id]" placeholder="Write a reply (optional)…" class="input-field !py-2 text-sm flex-1" />
-            <button (click)="sendReply(review)" class="btn-secondary !py-2 text-sm">Reply</button>
+          <!-- Customer & Product Info -->
+          <div class="space-y-1">
+            <p class="font-body text-xs sm:text-sm font-semibold text-ink leading-snug">
+              {{ review.userFullName }}
+              <span class="font-normal text-ink/50">on</span>
+              <span class="text-wine">{{ review.productName }}</span>
+            </p>
+            @if (review.comment) {
+              <p class="font-body text-xs sm:text-sm text-ink/70 leading-relaxed pt-1">
+                "{{ review.comment }}"
+              </p>
+            }
+          </div>
+
+          <!-- Moderation Action Buttons -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+            <button
+              (click)="moderate(review, 'APPROVED')"
+              class="btn-primary !py-2 !px-4 text-xs font-medium text-center"
+            >
+              Approve Review
+            </button>
+            <button
+              (click)="moderate(review, 'REJECTED')"
+              class="btn-secondary !py-2 !px-4 text-xs font-medium text-center"
+            >
+              Reject Review
+            </button>
+          </div>
+
+          <!-- Reply Input Drawer -->
+          <div class="flex flex-col sm:flex-row items-stretch gap-2 pt-2 border-t border-ink/5">
+            <input
+              type="text"
+              [(ngModel)]="replyDrafts[review.id]"
+              placeholder="Write an official reply (optional)…"
+              class="input-field !py-2 text-xs sm:text-sm flex-1"
+            />
+            <button
+              (click)="sendReply(review)"
+              class="btn-secondary !py-2 !px-4 text-xs font-medium text-center shrink-0"
+            >
+              Send Reply
+            </button>
           </div>
         </div>
       }

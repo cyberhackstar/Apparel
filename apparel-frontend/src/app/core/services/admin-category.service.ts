@@ -26,4 +26,8 @@ export class AdminCategoryService {
   deactivate(id: number): Observable<void> {
     return this.http.delete<ApiResponse<null>>(`${this.baseUrl}/${id}`).pipe(map(() => undefined));
   }
+
+  activate(id: number): Observable<void> {
+    return this.http.patch<ApiResponse<null>>(`${this.baseUrl}/${id}/activate`, {}).pipe(map(() => undefined));
+  }
 }

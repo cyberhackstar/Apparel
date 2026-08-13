@@ -1,15 +1,23 @@
 <header class="bg-ivory border-b border-ink/10 sticky top-0 z-40">
   <!-- Top bar -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-6">
-    <button class="lg:hidden" (click)="mobileMenuOpen.set(!mobileMenuOpen())" aria-label="Menu">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-4 sm:gap-6">
+    <!-- Hamburger button -->
+    <button
+      class="lg:hidden p-1 -ml-1 focus:outline-none"
+      (click)="mobileMenuOpen.set(!mobileMenuOpen())"
+      aria-label="Toggle Navigation Menu"
+    >
       <svg width="24" height="24" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
         <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" />
       </svg>
     </button>
 
-    <a routerLink="/" class="font-display text-2xl text-wine shrink-0">Ladies Apparel</a>
+    <!-- Brand Logo -->
+    <a routerLink="/" class="font-display text-xl sm:text-2xl text-wine shrink-0">
+      Ladies Apparel
+    </a>
 
-    <!-- Search -->
+    <!-- Desktop Search Bar -->
     <div class="hidden md:flex flex-1 max-w-md">
       <input
         type="text"
@@ -20,9 +28,10 @@
       />
     </div>
 
-    <div class="flex items-center gap-4 ml-auto">
+    <!-- Right Header Actions -->
+    <div class="flex items-center gap-3 sm:gap-4 ml-auto">
       <!-- Wishlist -->
-      <a routerLink="/wishlist" class="relative" aria-label="Wishlist">
+      <a routerLink="/wishlist" class="relative p-1" aria-label="Wishlist">
         <svg width="22" height="22" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
           <path
             d="M12 21s-6.716-4.35-9.428-8.485C.61 9.35 1.5 5 5.5 4 8 3.35 10 4.5 12 7c2-2.5 4-3.65 6.5-3 4 1 4.89 5.35 2.928 8.515C18.716 16.65 12 21 12 21z"
@@ -30,7 +39,7 @@
         </svg>
         @if (wishlistService.count() > 0) {
           <span
-            class="absolute -top-2 -right-2 bg-wine text-ivory text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
+            class="absolute -top-1 -right-1 bg-wine text-ivory text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
           >
             {{ wishlistService.count() }}
           </span>
@@ -38,7 +47,7 @@
       </a>
 
       <!-- Cart -->
-      <a routerLink="/cart" class="relative" aria-label="Cart">
+      <a routerLink="/cart" class="relative p-1" aria-label="Cart">
         <svg width="22" height="22" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
           <path d="M6 6h15l-1.5 9h-12z" stroke-linecap="round" stroke-linejoin="round" />
           <circle cx="9" cy="20" r="1" />
@@ -47,17 +56,21 @@
         </svg>
         @if (cartService.itemCount() > 0) {
           <span
-            class="absolute -top-2 -right-2 bg-wine text-ivory text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
+            class="absolute -top-1 -right-1 bg-wine text-ivory text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
           >
             {{ cartService.itemCount() }}
           </span>
         }
       </a>
 
-      <!-- Notifications -->
+      <!-- Notifications Dropdown -->
       @if (authService.isLoggedIn()) {
         <div class="relative" clickOutside (clickOutside)="notificationsOpen.set(false)">
-          <button (click)="toggleNotifications()" class="relative" aria-label="Notifications">
+          <button
+            (click)="toggleNotifications()"
+            class="relative p-1 flex items-center"
+            aria-label="Notifications"
+          >
             <svg width="22" height="22" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
               <path
                 d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"
@@ -68,15 +81,16 @@
             </svg>
             @if (notificationService.unreadCount() > 0) {
               <span
-                class="absolute -top-2 -right-2 bg-wine text-ivory text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
+                class="absolute -top-1 -right-1 bg-wine text-ivory text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
               >
                 {{ notificationService.unreadCount() }}
               </span>
             }
           </button>
+
           @if (notificationsOpen()) {
             <div
-              class="absolute right-0 mt-3 w-80 bg-white rounded-petal-sm shadow-cardHover py-2 font-body text-sm max-h-96 overflow-y-auto"
+              class="absolute right-0 mt-3 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-petal-sm shadow-cardHover py-2 font-body text-sm max-h-96 overflow-y-auto z-50"
             >
               <div class="flex items-center justify-between px-4 py-2 border-b border-ink/10">
                 <p class="font-semibold">Notifications</p>
@@ -106,12 +120,12 @@
         </div>
       }
 
-      <!-- Account -->
+      <!-- Account Dropdown -->
       <div class="relative" clickOutside (clickOutside)="accountMenuOpen.set(false)">
         @if (authService.isLoggedIn()) {
           <button
             (click)="toggleAccountMenu()"
-            class="flex items-center gap-1.5"
+            class="flex items-center gap-1.5 p-1"
             aria-label="Account menu"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
@@ -121,7 +135,7 @@
           </button>
           @if (accountMenuOpen()) {
             <div
-              class="absolute right-0 mt-3 w-48 bg-white rounded-petal-sm shadow-cardHover py-2 font-body text-sm"
+              class="absolute right-0 mt-3 w-48 bg-white rounded-petal-sm shadow-cardHover py-2 font-body text-sm z-50"
             >
               <p class="px-4 py-2 text-ink/50 border-b border-ink/10 truncate">
                 {{ authService.currentUser()?.fullName }}
@@ -177,41 +191,121 @@
     </div>
   </div>
 
-  <!-- Category nav -->
+  <!-- Category Navbar (Desktop) -->
   <nav class="hidden lg:block border-t border-ink/10">
     <div class="max-w-7xl mx-auto px-6 flex items-center gap-8 py-2.5">
       @for (cat of categories(); track cat.id) {
-        <a
-          [routerLink]="['/products']"
-          [queryParams]="{ categoryId: cat.id }"
-          class="font-body text-sm text-ink/70 hover:text-wine transition-colors"
-        >
-          {{ cat.name }}
-        </a>
+        <div class="relative group">
+          <a
+            [routerLink]="['/products']"
+            [queryParams]="{ categoryId: cat.id }"
+            class="font-body text-sm text-ink/70 hover:text-wine transition-colors flex items-center gap-1 py-2"
+          >
+            {{ cat.name }}
+            @if (cat.subCategories && cat.subCategories.length > 0) {
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                class="fill-none stroke-current stroke-2"
+              >
+                <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            }
+          </a>
+          @if (cat.subCategories && cat.subCategories.length > 0) {
+            <div
+              class="absolute left-0 top-full hidden group-hover:block bg-white rounded-petal-sm shadow-cardHover py-2 min-w-[200px] z-50"
+            >
+              @for (sub of cat.subCategories; track sub.id) {
+                <a
+                  [routerLink]="['/products']"
+                  [queryParams]="{ categoryId: sub.id }"
+                  class="block px-4 py-2 font-body text-sm text-ink/70 hover:bg-blush hover:text-wine"
+                >
+                  {{ sub.name }}
+                </a>
+              }
+            </div>
+          }
+        </div>
       }
     </div>
   </nav>
 
-  <!-- Mobile menu -->
+  <!-- Mobile Menu Drawer & Overlay -->
   @if (mobileMenuOpen()) {
-    <div class="lg:hidden border-t border-ink/10 px-4 py-4 space-y-3">
-      <input
-        type="text"
-        [(ngModel)]="searchTerm"
-        (keydown.enter)="onSearch()"
-        placeholder="Search…"
-        class="input-field text-sm"
-      />
-      @for (cat of categories(); track cat.id) {
-        <a
-          [routerLink]="['/products']"
-          [queryParams]="{ categoryId: cat.id }"
-          (click)="mobileMenuOpen.set(false)"
-          class="block font-body text-sm py-1"
-        >
-          {{ cat.name }}
-        </a>
-      }
+    <div class="lg:hidden fixed inset-0 z-50 flex">
+      <!-- Dark Overlay / Backdrop: Closes drawer when clicking empty space -->
+      <div
+        class="fixed inset-0 bg-ink/40 backdrop-blur-sm transition-opacity"
+        (click)="mobileMenuOpen.set(false)"
+      ></div>
+
+      <!-- Drawer Content Side Panel -->
+      <div
+        class="relative w-4/5 max-w-sm bg-ivory h-full shadow-cardHover flex flex-col z-10 overflow-y-auto"
+      >
+        <!-- Drawer Header -->
+        <div class="p-4 border-b border-ink/10 flex items-center justify-between">
+          <span class="font-display text-lg text-wine">Menu</span>
+          <button
+            (click)="mobileMenuOpen.set(false)"
+            aria-label="Close Menu"
+            class="p-1 text-ink/60 hover:text-ink"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              class="fill-none stroke-current stroke-2"
+            >
+              <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Search Bar Inside Drawer -->
+        <div class="p-4 border-b border-ink/10">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            (keydown.enter)="onSearch(); mobileMenuOpen.set(false)"
+            placeholder="Search kurtis, sarees..."
+            class="w-full bg-white border border-ink/15 rounded-petal-sm px-3 py-2 text-sm font-body focus:outline-none focus:border-wine"
+          />
+        </div>
+
+        <!-- Category Links inside Drawer -->
+        <div class="p-4 space-y-2 flex-1">
+          @for (cat of categories(); track cat.id) {
+            <div>
+              <a
+                [routerLink]="['/products']"
+                [queryParams]="{ categoryId: cat.id }"
+                (click)="mobileMenuOpen.set(false)"
+                class="block font-body text-sm py-1.5 font-semibold text-ink hover:text-wine"
+              >
+                {{ cat.name }}
+              </a>
+              @if (cat.subCategories && cat.subCategories.length > 0) {
+                <div class="pl-3 space-y-1 my-1 border-l-2 border-wine/20">
+                  @for (sub of cat.subCategories; track sub.id) {
+                    <a
+                      [routerLink]="['/products']"
+                      [queryParams]="{ categoryId: sub.id }"
+                      (click)="mobileMenuOpen.set(false)"
+                      class="block font-body text-xs py-1 text-ink/70 hover:text-wine"
+                    >
+                      {{ sub.name }}
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
     </div>
   }
 </header>

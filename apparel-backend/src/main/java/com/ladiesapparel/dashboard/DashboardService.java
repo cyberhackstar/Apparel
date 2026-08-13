@@ -17,6 +17,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -65,6 +66,7 @@ public class DashboardService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(cacheNames = "lowStock", key = "#threshold")
     public List<LowStockVariantResponse> getLowStockVariants(int threshold) {
         List<ProductVariant> variants = variantRepository

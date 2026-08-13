@@ -69,16 +69,14 @@ public class PaymentService {
             payment.setStatus(PaymentTransactionStatus.FAILED);
             payment.setFailureReason("Signature verification failed");
             paymentRepository.save(payment);
-            throw ApiException.badRequest(
-                    "Payment verification failed. If money was deducted, it will be refunded automatically.");
+            throw ApiException.badRequest("Payment verification failed. If money was deducted, it will be refunded automatically.");
         }
 
         markPaymentSuccessful(payment, request.getRazorpayPaymentId());
     }
 
     /**
-     * Handles Razorpay webhook events — the authoritative fallback in case the
-     * client
+     * Handles Razorpay webhook events — the authoritative fallback in case the client
      * never calls /verify (e.g. browser closed right after payment).
      */
     @Transactional
@@ -125,15 +123,8 @@ public class PaymentService {
         }
     }
 
-    /** Full refund convenience overload */
     @Transactional
     public void refundOrder(String orderNumber) {
-        refundOrder(orderNumber, null);
-    }
-
-    /** Main refund implementation supporting custom or full refund amounts */
-    @Transactional
-    public void refundOrder(String orderNumber, BigDecimal refundAmount) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> ApiException.notFound("Order not found"));
 
@@ -144,15 +135,7 @@ public class PaymentService {
         Payment payment = paymentRepository.findTopByOrderOrderNumberOrderByCreatedAtDesc(orderNumber)
                 .orElseThrow(() -> ApiException.notFound("No payment record found for this order"));
 
-        if (payment.getRazorpayPaymentId() == null || payment.getRazorpayPaymentId().isBlank()) {
-            throw ApiException.badRequest("No valid Razorpay payment ID found for this order");
-        }
-
-        BigDecimal finalRefundAmount = (refundAmount != null && refundAmount.compareTo(BigDecimal.ZERO) > 0)
-                ? refundAmount
-                : payment.getAmount();
-
-        String refundId = razorpayService.refundPayment(payment.getRazorpayPaymentId(), finalRefundAmount);
+        String refundId = razorpayService.refundPayment(payment.getRazorpayPaymentId(), payment.getAmount());
 
         payment.setStatus(PaymentTransactionStatus.REFUNDED);
         payment.setRefundId(refundId);
@@ -160,8 +143,6 @@ public class PaymentService {
 
         order.setPaymentStatus(PaymentStatus.REFUNDED);
         orderRepository.save(order);
-
-        log.info("Successfully processed refund for order {}. Refund ID: {}", orderNumber, refundId);
     }
 
     private void markPaymentSuccessful(Payment payment, String razorpayPaymentId) {

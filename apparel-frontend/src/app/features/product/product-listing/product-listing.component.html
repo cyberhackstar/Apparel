@@ -34,16 +34,31 @@
     <aside class="hidden lg:block w-64 shrink-0 space-y-8">
       <div>
         <h3 class="font-body font-semibold text-sm mb-3">Category</h3>
-        <ul class="space-y-2 font-body text-sm">
+        <ul class="space-y-1 font-body text-sm">
           @for (cat of categories(); track cat.id) {
             <li>
               <button
                 (click)="applyFilter({ categoryId: cat.id })"
-                class="text-left w-full"
+                class="text-left w-full py-1"
                 [class]="filters.categoryId === cat.id ? 'text-wine font-semibold' : 'text-ink/70 hover:text-ink'"
               >
                 {{ cat.name }}
               </button>
+              @if (cat.subCategories && cat.subCategories.length > 0) {
+                <ul class="pl-3 space-y-1 mt-1 mb-2 border-l border-ink/10">
+                  @for (sub of cat.subCategories; track sub.id) {
+                    <li>
+                      <button
+                        (click)="applyFilter({ categoryId: sub.id })"
+                        class="text-left w-full py-1 text-xs"
+                        [class]="filters.categoryId === sub.id ? 'text-wine font-semibold' : 'text-ink/50 hover:text-ink'"
+                      >
+                        {{ sub.name }}
+                      </button>
+                    </li>
+                  }
+                </ul>
+              }
             </li>
           }
         </ul>
@@ -91,12 +106,23 @@
             <button (click)="filtersOpen.set(false)" class="text-2xl leading-none">&times;</button>
           </div>
           <h3 class="font-body font-semibold text-sm mb-3">Category</h3>
-          <ul class="space-y-2 font-body text-sm mb-6">
+          <ul class="space-y-1 font-body text-sm mb-6">
             @for (cat of categories(); track cat.id) {
               <li>
-                <button (click)="applyFilter({ categoryId: cat.id }); filtersOpen.set(false)" class="text-left w-full text-ink/70">
+                <button (click)="applyFilter({ categoryId: cat.id }); filtersOpen.set(false)" class="text-left w-full text-ink/70 py-1">
                   {{ cat.name }}
                 </button>
+                @if (cat.subCategories && cat.subCategories.length > 0) {
+                  <ul class="pl-3 space-y-1 mb-1 border-l border-ink/10">
+                    @for (sub of cat.subCategories; track sub.id) {
+                      <li>
+                        <button (click)="applyFilter({ categoryId: sub.id }); filtersOpen.set(false)" class="text-left w-full text-ink/50 text-xs py-1">
+                          {{ sub.name }}
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
               </li>
             }
           </ul>

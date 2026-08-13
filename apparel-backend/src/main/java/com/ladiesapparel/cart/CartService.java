@@ -30,7 +30,7 @@ public class CartService {
     @Transactional
     public CartResponse addItem(AddToCartRequest request) {
         User user = authenticatedUserProvider.getCurrentUser();
-        Cart cart = getOrCreateCartEntity(user);
+        Cart cart = getOrCreateCart(user);
 
         ProductVariant variant = variantRepository.findById(request.getVariantId())
                 .orElseThrow(() -> ApiException.notFound("Product variant not found"));
@@ -69,7 +69,7 @@ public class CartService {
     @Transactional
     public CartResponse updateItemQuantity(Long cartItemId, int quantity) {
         User user = authenticatedUserProvider.getCurrentUser();
-        Cart cart = getOrCreateCartEntity(user);
+        Cart cart = getOrCreateCart(user);
 
         CartItem item = cart.getItems().stream()
                 .filter(i -> i.getId().equals(cartItemId))
@@ -90,7 +90,7 @@ public class CartService {
     @Transactional
     public CartResponse removeItem(Long cartItemId) {
         User user = authenticatedUserProvider.getCurrentUser();
-        Cart cart = getOrCreateCartEntity(user);
+        Cart cart = getOrCreateCart(user);
 
         boolean removed = cart.getItems().removeIf(i -> i.getId().equals(cartItemId));
         if (!removed) {
@@ -104,27 +104,24 @@ public class CartService {
     @Transactional
     public void clearCart() {
         User user = authenticatedUserProvider.getCurrentUser();
-        Cart cart = getOrCreateCartEntity(user);
+        Cart cart = getOrCreateCart(user);
         cart.getItems().clear();
         cartRepository.save(cart);
     }
 
-    @Transactional // ← remove readOnly
+    @Transactional(readOnly = true)
     public CartResponse getCart() {
         User user = authenticatedUserProvider.getCurrentUser();
+        // eager-fetch variant used here (read path) — mutation paths still use the plain
+        // getOrCreateCart() below since they're already @Transactional and don't need it
         Cart cart = cartRepository.findByUserIdWithDetails(user.getId())
-                .orElseGet(() -> createCartForUser(user)); // ← now allowed to INSERT
+                .orElseGet(() -> getOrCreateCart(user));
         return toResponse(cart);
     }
 
-    private Cart getOrCreateCartEntity(User user) {
-        return cartRepository.findByUserIdWithDetails(user.getId())
-                .orElseGet(() -> createCartForUser(user));
-    }
-
-    private Cart createCartForUser(User user) {
-        Cart cart = Cart.builder().user(user).build();
-        return cartRepository.save(cart);
+    private Cart getOrCreateCart(User user) {
+        return cartRepository.findByUserId(user.getId())
+                .orElseGet(() -> cartRepository.save(Cart.builder().user(user).build()));
     }
 
     private CartResponse toResponse(Cart cart) {

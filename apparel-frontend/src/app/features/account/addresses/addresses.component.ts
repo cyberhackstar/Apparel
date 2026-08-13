@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { AddressService } from '../../../core/services/address.service';
@@ -12,6 +12,7 @@ import { Address, AddressType } from '../../../core/models/address.model';
   templateUrl: './addresses.component.html',
 })
 export class AddressesComponent implements OnInit {
+  /** When used inside checkout, hides the page title and emits the selected address instead of just managing the list. */
   @Input() selectionMode = false;
   @Input() selectedAddressId: number | null = null;
   @Output() addressSelected = new EventEmitter<Address>();
@@ -39,6 +40,8 @@ export class AddressesComponent implements OnInit {
     isDefault: [false],
   });
 
+  
+
   ngOnInit(): void {
     this.fetchAddresses();
   }
@@ -49,6 +52,7 @@ export class AddressesComponent implements OnInit {
       next: (addresses) => {
         this.addresses.set(addresses);
         this.loading.set(false);
+        // auto-select the default address when used inside checkout
         if (this.selectionMode && !this.selectedAddressId) {
           const def = addresses.find((a) => a.isDefault) ?? addresses[0];
           if (def) this.select(def);
@@ -70,28 +74,6 @@ export class AddressesComponent implements OnInit {
     this.showForm.set(true);
   }
 
-  // ✅ Strip leading 0 from phone automatically
-  onPhoneInput(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    let value = input.value.replace(/\D/g, ''); // remove non-digits
-    if (value.startsWith('0')) {
-      value = value.slice(1);
-    }
-    // max 10 digits
-    value = value.slice(0, 10);
-    input.value = value;
-    this.form.get('phone')?.setValue(value, { emitEvent: true });
-    this.form.get('phone')?.markAsTouched();
-  }
-
-  // ✅ Only allow digits in pincode
-  onPincodeInput(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const value = input.value.replace(/\D/g, '').slice(0, 6);
-    input.value = value;
-    this.form.get('pincode')?.setValue(value, { emitEvent: true });
-  }
-
   save(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -104,7 +86,6 @@ export class AddressesComponent implements OnInit {
     const obs = editId
       ? this.addressService.update(editId, request)
       : this.addressService.add(request);
-
     obs.subscribe({
       next: (address) => {
         this.toastr.success(editId ? 'Address updated' : 'Address added');

@@ -45,6 +45,7 @@ public class Product {
     @Column(length = 100)
     private String fabric;
 
+    // Base variant-independent price; individual variants may add additionalPrice on top
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal basePrice;
 
@@ -59,6 +60,7 @@ public class Product {
     @Builder.Default
     private BigDecimal gstPercentage = new BigDecimal("5.00");
 
+    // Comma-separated simple tags for now: e.g. "new-arrival,bestseller,trending"
     @Column(length = 300)
     private String tags;
 
@@ -74,6 +76,9 @@ public class Product {
     @Builder.Default
     private boolean active = true;
 
+    // Set (not List) is deliberate: Hibernate throws MultipleBagFetchException if you try to
+    // eagerly fetch two List-typed collections in the same query — Sets allow it (see
+    // ProductRepository.findWithDetailsBySlugAndActiveTrue / findWithDetailsById).
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<ProductVariant> variants = new HashSet<>();

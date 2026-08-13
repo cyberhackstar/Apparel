@@ -1,31 +1,69 @@
-<div class="p-8">
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="font-display text-2xl">Products</h1>
-    <div class="flex gap-3">
-      <button (click)="showBulkUpload.set(!showBulkUpload())" class="btn-secondary !py-2 text-sm">Bulk Upload (CSV)</button>
-      <a routerLink="/admin/products/new" class="btn-primary !py-2 text-sm">+ Add Product</a>
+<div class="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+  <!-- Top Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="font-display text-2xl sm:text-3xl text-ink">Products</h1>
+      <p class="font-body text-xs sm:text-sm text-ink/50 mt-0.5">
+        Manage catalog items, pricing, stock levels, and bulk imports.
+      </p>
+    </div>
+    <div class="flex items-center gap-2 sm:gap-3 self-start sm:self-auto w-full sm:w-auto">
+      <button
+        (click)="showBulkUpload.set(!showBulkUpload())"
+        class="btn-secondary !py-2 text-xs sm:text-sm flex-1 sm:flex-initial text-center"
+      >
+        Bulk Upload (CSV)
+      </button>
+      <a
+        routerLink="/admin/products/new"
+        class="btn-primary !py-2 text-xs sm:text-sm flex-1 sm:flex-initial text-center shrink-0"
+      >
+        + Add Product
+      </a>
     </div>
   </div>
 
+  <!-- Bulk Upload Section -->
   @if (showBulkUpload()) {
-    <div class="card p-6 mb-6">
-      <h3 class="font-display text-lg mb-2">Bulk Upload Products</h3>
-      <p class="font-body text-xs text-ink/50 mb-4">
-        CSV columns (one row per variant, grouped by product name): productName, description, categoryId, brand, fabric,
-        basePrice, mrp, discountPercentage, gstPercentage, tags, size, color, sku, stockQuantity, additionalPrice
+    <div class="card p-4 sm:p-6 space-y-4">
+      <h3 class="font-display text-lg sm:text-xl">Bulk Upload Products</h3>
+      <p class="font-body text-xs text-ink/50 leading-relaxed">
+        CSV columns (one row per variant, grouped by product name): <br class="hidden sm:inline" />
+        <code class="text-[11px] bg-ink/5 px-1 py-0.5 rounded font-mono break-all sm:break-normal">
+          productName, description, categoryId, brand, fabric, basePrice, mrp, discountPercentage,
+          gstPercentage, tags, size, color, sku, stockQuantity, additionalPrice
+        </code>
       </p>
-      <div class="flex gap-3 mb-4">
-        <input type="file" accept=".csv" (change)="onFileSelected($event)" class="font-body text-sm" />
-        <button (click)="uploadCsv()" class="btn-primary !py-2 text-sm" [disabled]="uploading()">
-          {{ uploading() ? 'Uploading…' : 'Upload' }}
+
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <input
+          type="file"
+          accept=".csv"
+          (change)="onFileSelected($event)"
+          class="font-body text-xs sm:text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-petal-sm file:border-0 file:text-xs file:font-semibold file:bg-wine/10 file:text-wine hover:file:bg-wine/20 cursor-pointer"
+        />
+        <button
+          (click)="uploadCsv()"
+          class="btn-primary !py-2 text-xs sm:text-sm shrink-0"
+          [disabled]="uploading()"
+        >
+          {{ uploading() ? 'Uploading…' : 'Upload CSV' }}
         </button>
       </div>
 
       @if (uploadResult(); as result) {
-        <div class="bg-ivory rounded-petal-sm p-4 font-body text-sm">
-          <p>Rows read: {{ result.totalRowsRead }} · Created: <span class="text-green-700 font-semibold">{{ result.productsCreated }}</span> · Failed: <span class="text-wine font-semibold">{{ result.productsFailed }}</span></p>
+        <div
+          class="bg-ivory rounded-petal-sm p-3 sm:p-4 font-body text-xs sm:text-sm border border-ink/5 space-y-2"
+        >
+          <p>
+            Rows read: <strong>{{ result.totalRowsRead }}</strong> · Created:
+            <span class="text-green-700 font-semibold">{{ result.productsCreated }}</span> · Failed:
+            <span class="text-wine font-semibold">{{ result.productsFailed }}</span>
+          </p>
           @if (result.errors.length > 0) {
-            <ul class="mt-2 list-disc list-inside text-xs text-ink/60 space-y-1">
+            <ul
+              class="list-disc list-inside text-xs text-ink/60 space-y-1 max-h-36 overflow-y-auto pt-1"
+            >
               @for (err of result.errors; track $index) {
                 <li>{{ err }}</li>
               }
@@ -36,68 +74,225 @@
     </div>
   }
 
-  <div class="flex gap-2 mb-6 max-w-md">
+  <!-- Search & Filter Controls -->
+  <div class="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
     <input
-      type="text" [(ngModel)]="keyword" (keydown.enter)="search()" placeholder="Search products…"
-      class="input-field !py-2 text-sm"
+      type="text"
+      [(ngModel)]="keyword"
+      (keydown.enter)="search()"
+      placeholder="Search products…"
+      class="input-field !py-2 text-xs sm:text-sm w-full sm:max-w-xs"
     />
-    <button (click)="search()" class="btn-secondary !py-2 text-sm">Search</button>
-  </div>
 
-  @if (loading()) {
-    <p class="font-body text-ink/50">Loading…</p>
-  } @else {
-    <div class="card overflow-hidden">
-      <table class="w-full font-body text-sm">
-        <thead class="bg-ink/5 text-left">
-          <tr>
-            <th class="px-4 py-3">Product</th>
-            <th class="px-4 py-3">Category</th>
-            <th class="px-4 py-3">Price</th>
-            <th class="px-4 py-3">Stock</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (product of products(); track product.id) {
-            <tr class="border-t border-ink/5">
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-3">
-                  <img
-                    [src]="product.images[0]?.imageUrl || 'https://placehold.co/60x70/F1DDE0/7A2E38?text=—'"
-                    class="w-10 h-12 object-cover rounded-petal-sm"
-                  />
-                  <span class="max-w-[240px] truncate">{{ product.name }}</span>
-                </div>
-              </td>
-              <td class="px-4 py-3 text-ink/60">{{ product.categoryName }}</td>
-              <td class="px-4 py-3">₹{{ product.basePrice | number: '1.0-0' }}</td>
-              <td class="px-4 py-3" [class.text-wine]="totalStock(product) < 10">{{ totalStock(product) }}</td>
-              <td class="px-4 py-3">
-                <span class="text-xs px-2 py-1 rounded-petal-sm" [class]="product.active ? 'bg-green-50 text-green-700' : 'bg-ink/5 text-ink/40'">
-                  {{ product.active ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-right">
-                <a [routerLink]="['/admin/products', product.id, 'edit']" class="text-wine hover:underline mr-3">Edit</a>
-                @if (product.active) {
-                  <button (click)="deactivate(product.id)" class="text-ink/40 hover:underline">Deactivate</button>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <div class="grid grid-cols-2 sm:flex items-center gap-2">
+      <select
+        class="input-field !py-2 text-xs sm:text-sm w-full sm:w-auto"
+        [value]="status"
+        (change)="onStatusChange($any($event.target).value)"
+      >
+        <option value="ALL">All Statuses</option>
+        <option value="ACTIVE">Active only</option>
+        <option value="INACTIVE">Inactive only</option>
+      </select>
+
+      <select
+        class="input-field !py-2 text-xs sm:text-sm w-full sm:w-auto"
+        (change)="onCategoryChange($any($event.target).value)"
+      >
+        <option value="">All Categories</option>
+        @for (cat of categories(); track cat.id) {
+          <option [value]="cat.id">{{ cat.parentCategoryName ? '— ' : '' }}{{ cat.name }}</option>
+        }
+      </select>
     </div>
 
+    <div class="flex items-center justify-between sm:justify-start gap-3 pt-1 sm:pt-0">
+      <button
+        (click)="search()"
+        class="btn-secondary !py-2 text-xs sm:text-sm flex-1 sm:flex-initial"
+      >
+        Search
+      </button>
+
+      @if (!loading()) {
+        <span class="font-body text-xs sm:text-sm text-ink/50 sm:ml-auto shrink-0">
+          {{ totalElements() }} product(s)
+        </span>
+      }
+    </div>
+  </div>
+
+  <!-- Main Content Listing -->
+  @if (loading()) {
+    <p class="font-body text-sm text-ink/50 py-8 text-center">Loading products…</p>
+  } @else {
+    <div class="card overflow-hidden">
+      <!-- Desktop Table View (Visible on sm and larger viewports) -->
+      <div class="hidden sm:block overflow-x-auto">
+        <table class="w-full font-body text-sm">
+          <thead class="bg-ink/5 text-left">
+            <tr>
+              <th class="px-4 py-3">Product</th>
+              <th class="px-4 py-3">Category</th>
+              <th class="px-4 py-3">Price</th>
+              <th class="px-4 py-3">Stock</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-ink/5">
+            @for (product of products(); track product.id) {
+              <tr
+                class="hover:bg-ink/[0.02] transition-colors"
+                [class.bg-ink/[0.03]]="!product.active"
+              >
+                <td class="px-4 py-3">
+                  <div class="flex items-center gap-3">
+                    <img
+                      [src]="
+                        product.images[0]?.imageUrl ||
+                        'https://placehold.co/60x70/F1DDE0/7A2E38?text=—'
+                      "
+                      class="w-10 h-12 object-cover rounded-petal-sm shrink-0"
+                      [class.opacity-50]="!product.active"
+                    />
+                    <span
+                      class="max-w-[240px] truncate font-medium text-ink"
+                      [class.text-ink/40]="!product.active"
+                    >
+                      {{ product.name }}
+                    </span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-ink/60 whitespace-nowrap">{{ product.categoryName }}</td>
+                <td class="px-4 py-3 font-semibold whitespace-nowrap">
+                  ₹{{ product.basePrice | number: '1.0-0' }}
+                </td>
+                <td
+                  class="px-4 py-3 whitespace-nowrap"
+                  [class.text-wine]="totalStock(product) < 10"
+                  [class.font-bold]="totalStock(product) < 10"
+                >
+                  {{ totalStock(product) }}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  <span
+                    class="text-xs px-2 py-0.5 rounded-petal-sm font-medium inline-block"
+                    [class]="product.active ? 'bg-green-50 text-green-700' : 'bg-ink/5 text-ink/40'"
+                  >
+                    {{ product.active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap font-medium">
+                  <a
+                    [routerLink]="['/admin/products', product.id, 'edit']"
+                    class="text-wine hover:underline mr-3"
+                    >Edit</a
+                  >
+                  @if (product.active) {
+                    <button (click)="deactivate(product.id)" class="text-ink/40 hover:underline">
+                      Deactivate
+                    </button>
+                  } @else {
+                    <button
+                      (click)="activate(product.id)"
+                      class="text-green-700 hover:underline font-semibold"
+                    >
+                      Reactivate
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile List View (Visible on screens smaller than sm) -->
+      <div class="sm:hidden divide-y divide-ink/5">
+        @for (product of products(); track product.id) {
+          <div class="p-4 space-y-3" [class.bg-ink/[0.02]]="!product.active">
+            <!-- Header: Image, Title, Category & Status -->
+            <div class="flex gap-3 items-start">
+              <img
+                [src]="
+                  product.images[0]?.imageUrl || 'https://placehold.co/60x70/F1DDE0/7A2E38?text=—'
+                "
+                class="w-12 h-14 object-cover rounded-petal-sm shrink-0"
+                [class.opacity-50]="!product.active"
+              />
+              <div class="min-w-0 flex-1 space-y-0.5">
+                <div class="flex items-start justify-between gap-2">
+                  <p
+                    class="font-body font-semibold text-sm text-ink truncate"
+                    [class.text-ink/50]="!product.active"
+                  >
+                    {{ product.name }}
+                  </p>
+                  <span
+                    class="text-[10px] px-2 py-0.5 rounded-petal-sm font-medium shrink-0"
+                    [class]="product.active ? 'bg-green-50 text-green-700' : 'bg-ink/5 text-ink/40'"
+                  >
+                    {{ product.active ? 'Active' : 'Inactive' }}
+                  </span>
+                </div>
+                <p class="font-body text-xs text-ink/50 truncate">{{ product.categoryName }}</p>
+              </div>
+            </div>
+
+            <!-- Price & Stock Stats Grid -->
+            <div
+              class="grid grid-cols-2 text-xs bg-white/60 rounded-petal-sm p-2 border border-ink/5 font-body"
+            >
+              <div>
+                <span class="text-ink/40 block">Price:</span>
+                <span class="font-semibold text-ink text-sm"
+                  >₹{{ product.basePrice | number: '1.0-0' }}</span
+                >
+              </div>
+              <div class="text-right">
+                <span class="text-ink/40 block">Stock:</span>
+                <span class="font-semibold text-sm" [class.text-wine]="totalStock(product) < 10">
+                  {{ totalStock(product) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Actions Footer -->
+            <div class="flex justify-end gap-4 text-xs font-semibold pt-1 border-t border-ink/5">
+              <a
+                [routerLink]="['/admin/products', product.id, 'edit']"
+                class="text-wine hover:underline"
+              >
+                Edit Product
+              </a>
+              @if (product.active) {
+                <button (click)="deactivate(product.id)" class="text-ink/40 hover:underline">
+                  Deactivate
+                </button>
+              } @else {
+                <button (click)="activate(product.id)" class="text-green-700 hover:underline">
+                  Reactivate
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Responsive Pagination Controls -->
     @if (totalPages() > 1) {
-      <div class="flex justify-center gap-2 mt-6">
+      <div class="flex items-center justify-center gap-1.5 sm:gap-2 mt-6 flex-wrap">
         @for (p of [].constructor(totalPages()); track $index) {
           <button
             (click)="goToPage($index)"
-            class="w-9 h-9 rounded-petal-sm text-sm font-body"
-            [class]="page() === $index ? 'bg-wine text-ivory' : 'bg-white border border-ink/15'"
+            class="w-8 h-8 sm:w-9 sm:h-9 rounded-petal-sm text-xs sm:text-sm font-body transition-colors"
+            [class]="
+              page() === $index
+                ? 'bg-wine text-ivory font-semibold'
+                : 'bg-white border border-ink/15 hover:bg-ink/5 text-ink'
+            "
           >
             {{ $index + 1 }}
           </button>

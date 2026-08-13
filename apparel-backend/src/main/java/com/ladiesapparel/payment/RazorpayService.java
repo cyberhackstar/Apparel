@@ -32,9 +32,7 @@ public class RazorpayService {
         return keyId;
     }
 
-    /**
-     * Creates a Razorpay Order and returns its id. Amount is converted to paise.
-     */
+    /** Creates a Razorpay Order and returns its id. Amount is converted to paise (smallest unit). */
     public String createOrder(BigDecimal amount, String receipt) {
         try {
             long amountInPaise = amount.multiply(BigDecimal.valueOf(100)).longValueExact();
@@ -53,10 +51,7 @@ public class RazorpayService {
         }
     }
 
-    /**
-     * Verifies the signature returned by Razorpay Checkout.js after a successful
-     * payment.
-     */
+    /** Verifies the signature returned by Razorpay Checkout.js after a successful payment. */
     public boolean verifyPaymentSignature(String razorpayOrderId, String razorpayPaymentId, String razorpaySignature) {
         try {
             JSONObject attributes = new JSONObject();
@@ -81,24 +76,19 @@ public class RazorpayService {
         }
     }
 
-    /**
-     * Issues a full or partial refund for a captured payment. Returns the refund
-     * id.
-     */
+    /** Issues a full refund for a captured payment. Returns the refund id. */
     public String refundPayment(String razorpayPaymentId, BigDecimal amount) {
         try {
-            JSONObject refundRequest = new JSONObject();
+            long amountInPaise = amount.multiply(BigDecimal.valueOf(100)).longValueExact();
 
-            if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
-                long amountInPaise = amount.multiply(BigDecimal.valueOf(100)).longValueExact();
-                refundRequest.put("amount", amountInPaise);
-            }
+            JSONObject refundRequest = new JSONObject();
+            refundRequest.put("amount", amountInPaise);
 
             com.razorpay.Refund refund = razorpayClient.payments.refund(razorpayPaymentId, refundRequest);
             return refund.get("id");
         } catch (RazorpayException e) {
-            log.error("Razorpay refund failed for payment {}: {}", razorpayPaymentId, e.getMessage());
-            throw ApiException.badRequest("Refund could not be processed via Razorpay: " + e.getMessage());
+            log.error("Razorpay refund failed: {}", e.getMessage());
+            throw ApiException.badRequest("Refund could not be processed. Please try again or contact support.");
         }
     }
 }

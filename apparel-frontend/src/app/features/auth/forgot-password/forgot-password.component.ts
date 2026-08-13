@@ -12,14 +12,14 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './forgot-password.component.html',
 })
 export class ForgotPasswordComponent {
-  private readonly fb = inject(FormBuilder);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly toastr = inject(ToastrService);
+  private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private toastr = inject(ToastrService);
 
   loading = signal(false);
 
-  readonly form = this.fb.group({
+  form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
   });
 

@@ -1,34 +1,94 @@
-<div class="p-8 max-w-4xl">
-  <h1 class="font-display text-2xl mb-2">Returns &amp; Exchanges</h1>
-  <p class="font-body text-sm text-ink/50 mb-6">Newly requested returns, and approved ones awaiting completion.</p>
+<div class="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+  <!-- Top Bar -->
+  <div>
+    <h1 class="font-display text-2xl sm:text-3xl text-ink">Returns &amp; Exchanges</h1>
+    <p class="font-body text-xs sm:text-sm text-ink/50 mt-1">
+      Newly requested returns, and approved ones awaiting completion.
+    </p>
+  </div>
 
+  <!-- Loading State -->
   @if (loading()) {
-    <p class="font-body text-ink/50">Loading…</p>
+    <p class="font-body text-sm text-ink/50 py-8 text-center">Loading return requests…</p>
   } @else if (returns().length === 0) {
-    <p class="font-body text-ink/50">No active return requests. 🎉</p>
+    <div class="card p-8 text-center space-y-2">
+      <p class="font-body text-base text-ink font-semibold">No active return requests 🎉</p>
+      <p class="font-body text-xs text-ink/50">All return requests have been processed.</p>
+    </div>
   } @else {
-    <div class="space-y-5">
+    <!-- Return Requests List -->
+    <div class="space-y-4 sm:space-y-5">
       @for (ret of returns(); track ret.id) {
-        <div class="card p-5">
-          <div class="flex items-center justify-between mb-2">
-            <p class="font-body font-semibold text-sm">{{ ret.orderNumber }} — {{ ret.customerEmail }}</p>
-            <span class="text-xs font-body font-semibold px-2 py-1 rounded-petal-sm bg-blush text-wine">{{ ret.status }}</span>
-          </div>
-          <p class="font-body text-sm text-ink/70 mb-3">Reason: {{ ret.reason }}</p>
+        <div class="card p-4 sm:p-5 space-y-3">
+          <!-- Card Header: Order info & Status -->
+          <div
+            class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-ink/5"
+          >
+            <div class="space-y-0.5">
+              <span class="font-body font-semibold text-sm text-ink font-mono block sm:inline">
+                #{{ ret.orderNumber }}
+              </span>
+              <span class="hidden sm:inline text-ink/30 mx-1.5">·</span>
+              <span class="font-body text-xs sm:text-sm text-ink/60 block sm:inline truncate">
+                {{ ret.customerEmail }}
+              </span>
+            </div>
 
-          <div class="flex gap-2 mb-3">
-            <input type="text" [(ngModel)]="notesDraft[ret.id]" placeholder="Admin notes (optional)…" class="input-field !py-2 text-sm flex-1" />
+            <span
+              class="text-[10px] sm:text-xs font-body font-semibold px-2 py-0.5 sm:py-1 rounded-petal-sm bg-blush text-wine self-start sm:self-auto shrink-0 uppercase tracking-wider"
+            >
+              {{ ret.status }}
+            </span>
+          </div>
+
+          <!-- Reason -->
+          <p class="font-body text-xs sm:text-sm text-ink/80 leading-relaxed">
+            <strong class="font-medium text-ink">Reason:</strong> {{ ret.reason }}
+          </p>
+
+          <!-- Input Drafts (Notes & Refund Amount) -->
+          <div class="flex flex-col sm:flex-row gap-2 pt-1">
+            <input
+              type="text"
+              [(ngModel)]="notesDraft[ret.id]"
+              placeholder="Admin notes (optional)…"
+              class="input-field !py-2 text-xs sm:text-sm flex-1"
+            />
+
             @if (ret.status === 'APPROVED') {
-              <input type="number" [(ngModel)]="refundDraft[ret.id]" placeholder="Refund ₹" class="input-field !py-2 text-sm w-32" />
+              <input
+                type="number"
+                [(ngModel)]="refundDraft[ret.id]"
+                placeholder="Refund Amount (₹)"
+                class="input-field !py-2 text-xs sm:text-sm w-full sm:w-36 shrink-0"
+              />
             }
           </div>
 
-          <div class="flex gap-3">
+          <!-- Action Buttons -->
+          <div
+            class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 border-t border-ink/5"
+          >
             @if (ret.status === 'REQUESTED') {
-              <button (click)="approve(ret)" class="btn-primary !py-1.5 !px-4 text-xs">Approve</button>
-              <button (click)="reject(ret)" class="btn-secondary !py-1.5 !px-4 text-xs">Reject</button>
+              <button
+                (click)="approve(ret)"
+                class="btn-primary !py-2 !px-4 text-xs font-medium text-center"
+              >
+                Approve Return
+              </button>
+              <button
+                (click)="reject(ret)"
+                class="btn-secondary !py-2 !px-4 text-xs font-medium text-center"
+              >
+                Reject Request
+              </button>
             } @else if (ret.status === 'APPROVED') {
-              <button (click)="complete(ret)" class="btn-primary !py-1.5 !px-4 text-xs">Mark Complete &amp; Refund</button>
+              <button
+                (click)="complete(ret)"
+                class="btn-primary !py-2 !px-4 text-xs font-medium text-center"
+              >
+                Mark Complete &amp; Refund
+              </button>
             }
           </div>
         </div>

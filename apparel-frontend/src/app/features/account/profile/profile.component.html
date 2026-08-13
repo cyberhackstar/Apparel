@@ -29,25 +29,68 @@
     <!-- Email change -->
     <div class="card p-6 mb-6">
       <h2 class="font-display text-xl mb-2">Email Address</h2>
-      <p class="font-body text-sm text-ink/60 mb-4">Current: <span class="font-semibold text-ink">{{ profile()?.email }}</span></p>
+      <p class="font-body text-sm text-ink/60 mb-4">
+        Current: <span class="font-semibold text-ink">{{ profile()?.email }}</span>
+      </p>
 
-      @if (emailChangeStep() === 'idle') {
-        <div class="flex gap-2">
-          <input type="email" [(ngModel)]="newEmail" [ngModelOptions]="{standalone: true}" placeholder="New email address" class="input-field flex-1" />
-          <button (click)="requestEmailChange()" class="btn-secondary" [disabled]="requestingEmailChange()">
-            {{ requestingEmailChange() ? 'Sending…' : 'Change Email' }}
+      <form [formGroup]="emailForm" class="space-y-3">
+        @if (emailChangeStep() === 'idle') {
+          <div class="flex gap-2 items-start">
+            <div class="flex-1">
+              <input
+                type="email"
+                formControlName="newEmail"
+                placeholder="New email address"
+                class="input-field w-full"
+              />
+              @if (ef.newEmail.touched && ef.newEmail.invalid) {
+                <p class="input-error mt-1">Please enter a valid email address.</p>
+              }
+            </div>
+            <button
+              type="button"
+              (click)="requestEmailChange()"
+              class="btn-secondary"
+              [disabled]="requestingEmailChange()"
+            >
+              {{ requestingEmailChange() ? 'Sending…' : 'Change Email' }}
+            </button>
+          </div>
+        } @else {
+          <p class="font-body text-sm text-ink/60 mb-3">
+            Enter the code sent to <span class="font-medium text-ink">{{ ef.newEmail.value }}</span
+            >:
+          </p>
+          <div class="flex gap-2 items-start">
+            <div class="flex-1">
+              <input
+                type="text"
+                formControlName="emailOtp"
+                placeholder="Verification code"
+                class="input-field w-full"
+              />
+              @if (ef.emailOtp.touched && ef.emailOtp.invalid) {
+                <p class="input-error mt-1">Please enter a valid verification code.</p>
+              }
+            </div>
+            <button
+              type="button"
+              (click)="verifyEmailChange()"
+              class="btn-primary"
+              [disabled]="verifyingEmailChange()"
+            >
+              {{ verifyingEmailChange() ? 'Verifying…' : 'Verify & Update' }}
+            </button>
+          </div>
+          <button
+            type="button"
+            (click)="resetEmailForm()"
+            class="font-body text-xs text-ink/40 hover:underline mt-2 block"
+          >
+            Cancel
           </button>
-        </div>
-      } @else {
-        <p class="font-body text-sm text-ink/60 mb-3">Enter the code sent to {{ newEmail }}:</p>
-        <div class="flex gap-2">
-          <input type="text" [(ngModel)]="emailOtp" [ngModelOptions]="{standalone: true}" placeholder="6-digit code" class="input-field flex-1" />
-          <button (click)="verifyEmailChange()" class="btn-primary" [disabled]="verifyingEmailChange()">
-            {{ verifyingEmailChange() ? 'Verifying…' : 'Verify & Update' }}
-          </button>
-        </div>
-        <button (click)="emailChangeStep.set('idle')" class="font-body text-xs text-ink/40 hover:underline mt-2">Cancel</button>
-      }
+        }
+      </form>
     </div>
 
     <!-- Password change -->

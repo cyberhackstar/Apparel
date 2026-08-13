@@ -9,7 +9,6 @@ import com.ladiesapparel.notification.NotificationType;
 import com.ladiesapparel.order.Order;
 import com.ladiesapparel.order.OrderRepository;
 import com.ladiesapparel.order.OrderStatus;
-import com.ladiesapparel.order.PaymentMethod;
 import com.ladiesapparel.order.PaymentStatus;
 import com.ladiesapparel.payment.PaymentService;
 import com.ladiesapparel.returns.dto.CreateReturnRequest;
@@ -20,7 +19,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -57,8 +55,7 @@ public class ReturnService {
 
         if (order.getDeliveredAt() == null
                 || ChronoUnit.DAYS.between(order.getDeliveredAt(), Instant.now()) > returnWindowDays) {
-            throw ApiException
-                    .badRequest("The return window (" + returnWindowDays + " days from delivery) has expired");
+            throw ApiException.badRequest("The return window (" + returnWindowDays + " days from delivery) has expired");
         }
 
         if (!returnRequestRepository.findByOrderIdAndStatusIn(order.getId(), ACTIVE_STATUSES).isEmpty()) {
@@ -76,17 +73,18 @@ public class ReturnService {
         return toResponse(returnRequest);
     }
 
-    @Transactional(readOnly = true)
     public PagedResponse<ReturnRequestResponse> getMyReturns(Pageable pageable) {
         User user = authenticatedUserProvider.getCurrentUser();
-        Page<ReturnRequest> page = returnRequestRepository.findByUserIdWithDetails(user.getId(), pageable);
+        Page<ReturnRequest> page = returnRequestRepository.findByUserIdOrderByRequestedAtDesc(user.getId(), pageable);
         return PagedResponse.from(page.map(this::toResponse));
     }
 
-    @Transactional(readOnly = true)
+    // ---------- Admin ----------
+
+    /** Returns requests still needing admin action: newly REQUESTED, or APPROVED and awaiting completion. */
     public PagedResponse<ReturnRequestResponse> getPendingReturns(Pageable pageable) {
         Page<ReturnRequest> page = returnRequestRepository
-                .findByStatusInWithDetails(List.of(ReturnStatus.REQUESTED, ReturnStatus.APPROVED), pageable);
+                .findByStatusInOrderByRequestedAtAsc(List.of(ReturnStatus.REQUESTED, ReturnStatus.APPROVED), pageable);
         return PagedResponse.from(page.map(this::toResponse));
     }
 
@@ -123,7 +121,7 @@ public class ReturnService {
 
     @Transactional
     public ReturnRequestResponse complete(Long id, String adminNotes, BigDecimal refundAmount) {
-        ReturnRequest returnRequest = returnRequestRepository.findByIdWithDetails(id)
+        ReturnRequest returnRequest = returnRequestRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Return request not found"));
 
         if (returnRequest.getStatus() != ReturnStatus.APPROVED) {
@@ -131,11 +129,16 @@ public class ReturnService {
         }
 
         Order order = returnRequest.getOrder();
-        BigDecimal finalRefundAmount = (refundAmount != null) ? refundAmount : order.getGrandTotal();
 
-        // Gateway refund only applies to paid, non-COD orders
-        if (order.getPaymentMethod() != PaymentMethod.COD && order.getPaymentStatus() == PaymentStatus.PAID) {
-            processRefundInNewTransaction(order.getOrderNumber(), finalRefundAmount);
+        // trigger the actual gateway refund only for prepaid orders — COD refunds are settled
+        // offline (bank transfer) and just recorded here for bookkeeping
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            try {
+                paymentService.refundOrder(order.getOrderNumber());
+            } catch (Exception e) {
+                log.error("Automatic refund failed for order {}: {}. Admin can retry via the refund endpoint.",
+                        order.getOrderNumber(), e.getMessage());
+            }
         }
 
         order.setStatus(OrderStatus.RETURNED);
@@ -143,35 +146,20 @@ public class ReturnService {
 
         returnRequest.setStatus(ReturnStatus.COMPLETED);
         returnRequest.setAdminNotes(adminNotes);
-        returnRequest.setRefundAmount(finalRefundAmount);
+        returnRequest.setRefundAmount(refundAmount);
         returnRequest.setResolvedAt(Instant.now());
         returnRequestRepository.save(returnRequest);
 
         notificationService.create(returnRequest.getUser(), "Return Completed",
-                "Your return for order " + order.getOrderNumber() + " has been processed. Refund amount: Rs. "
-                        + finalRefundAmount + ".",
+                "Your return for order " + order.getOrderNumber() + " has been processed"
+                        + (refundAmount != null ? ". Refund amount: Rs. " + refundAmount : "") + ".",
                 NotificationType.ORDER_UPDATE, "/orders/" + order.getOrderNumber());
 
         return toResponse(returnRequest);
     }
 
-    /**
-     * Runs in a separate transaction so that payment gateway exceptions will not
-     * trigger an UnexpectedRollbackException on the main return resolution
-     * transaction.
-     */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void processRefundInNewTransaction(String orderNumber, BigDecimal amount) {
-        try {
-            paymentService.refundOrder(orderNumber, amount);
-        } catch (Exception e) {
-            log.error("Automatic refund failed for order {}: {}. Admin can manually retry.",
-                    orderNumber, e.getMessage());
-        }
-    }
-
     private ReturnRequest getRequestedOrThrow(Long id) {
-        ReturnRequest returnRequest = returnRequestRepository.findByIdWithDetails(id)
+        ReturnRequest returnRequest = returnRequestRepository.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Return request not found"));
         if (returnRequest.getStatus() != ReturnStatus.REQUESTED) {
             throw ApiException.badRequest("This return request has already been resolved");

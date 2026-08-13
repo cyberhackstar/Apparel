@@ -1,47 +1,163 @@
-<div class="p-8">
-  <h1 class="font-display text-2xl mb-6">Customers</h1>
+<div class="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+  <!-- Top Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+    <div>
+      <h1 class="font-display text-2xl sm:text-3xl text-ink">Customers</h1>
+      <p class="font-body text-xs sm:text-sm text-ink/50 mt-0.5">
+        Manage customer accounts, status, and system access.
+      </p>
+    </div>
+  </div>
 
+  <!-- Loading State -->
   @if (loading()) {
-    <p class="font-body text-ink/50">Loading…</p>
+    <p class="font-body text-sm text-ink/50 py-8 text-center">Loading customers…</p>
   } @else {
     <div class="card overflow-hidden">
-      <table class="w-full font-body text-sm">
-        <thead class="bg-ink/5 text-left">
-          <tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Phone</th><th class="px-4 py-3">Joined</th><th class="px-4 py-3">Status</th><th class="px-4 py-3"></th></tr>
-        </thead>
-        <tbody>
-          @for (customer of customers(); track customer.id) {
-            <tr class="border-t border-ink/5">
-              <td class="px-4 py-3">{{ customer.fullName }}</td>
-              <td class="px-4 py-3 text-ink/60">{{ customer.email }}</td>
-              <td class="px-4 py-3 text-ink/60">{{ customer.phone }}</td>
-              <td class="px-4 py-3 text-ink/60">{{ customer.createdAt | date: 'MMM d, y' }}</td>
-              <td class="px-4 py-3">
-                @if (customer.blocked) {
-                  <span class="text-xs px-2 py-1 rounded-petal-sm bg-blush text-wine">Blocked</span>
-                } @else if (!customer.enabled) {
-                  <span class="text-xs px-2 py-1 rounded-petal-sm bg-ink/5 text-ink/40">Unverified</span>
-                } @else {
-                  <span class="text-xs px-2 py-1 rounded-petal-sm bg-green-50 text-green-700">Active</span>
-                }
-              </td>
-              <td class="px-4 py-3 text-right">
-                @if (customer.blocked) {
-                  <button (click)="unblock(customer)" class="text-wine hover:underline">Unblock</button>
-                } @else {
-                  <button (click)="block(customer)" class="text-ink/40 hover:underline">Block</button>
-                }
-              </td>
+      <!-- Desktop Table View (Visible on sm and larger screens) -->
+      <div class="hidden sm:block overflow-x-auto">
+        <table class="w-full font-body text-sm">
+          <thead class="bg-ink/5 text-left">
+            <tr>
+              <th class="px-4 py-3">Name</th>
+              <th class="px-4 py-3">Email</th>
+              <th class="px-4 py-3">Phone</th>
+              <th class="px-4 py-3">Joined</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3 text-right">Action</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y divide-ink/5">
+            @for (customer of customers(); track customer.id) {
+              <tr class="hover:bg-ink/[0.02] transition-colors">
+                <td class="px-4 py-3 font-semibold text-ink whitespace-nowrap">
+                  {{ customer.fullName }}
+                </td>
+                <td class="px-4 py-3 text-ink/60 whitespace-nowrap">
+                  {{ customer.email }}
+                </td>
+                <td class="px-4 py-3 text-ink/60 whitespace-nowrap">
+                  {{ customer.phone }}
+                </td>
+                <td class="px-4 py-3 text-ink/60 whitespace-nowrap">
+                  {{ customer.createdAt | date: 'MMM d, y' }}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                  @if (customer.blocked) {
+                    <span
+                      class="text-xs px-2 py-0.5 rounded-petal-sm bg-blush text-wine font-medium"
+                      >Blocked</span
+                    >
+                  } @else if (!customer.enabled) {
+                    <span
+                      class="text-xs px-2 py-0.5 rounded-petal-sm bg-ink/5 text-ink/40 font-medium"
+                      >Unverified</span
+                    >
+                  } @else {
+                    <span
+                      class="text-xs px-2 py-0.5 rounded-petal-sm bg-green-50 text-green-700 font-medium"
+                      >Active</span
+                    >
+                  }
+                </td>
+                <td class="px-4 py-3 text-right whitespace-nowrap font-medium">
+                  @if (customer.blocked) {
+                    <button (click)="unblock(customer)" class="text-wine hover:underline">
+                      Unblock
+                    </button>
+                  } @else {
+                    <button (click)="block(customer)" class="text-ink/40 hover:underline">
+                      Block
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Card View (Visible on screens smaller than sm) -->
+      <div class="sm:hidden divide-y divide-ink/5">
+        @for (customer of customers(); track customer.id) {
+          <div class="p-4 space-y-2">
+            <!-- Header: Name & Status Badge -->
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-body font-semibold text-sm text-ink truncate">
+                {{ customer.fullName }}
+              </span>
+              @if (customer.blocked) {
+                <span
+                  class="text-[10px] px-2 py-0.5 rounded-petal-sm bg-blush text-wine font-medium shrink-0"
+                  >Blocked</span
+                >
+              } @else if (!customer.enabled) {
+                <span
+                  class="text-[10px] px-2 py-0.5 rounded-petal-sm bg-ink/5 text-ink/40 font-medium shrink-0"
+                  >Unverified</span
+                >
+              } @else {
+                <span
+                  class="text-[10px] px-2 py-0.5 rounded-petal-sm bg-green-50 text-green-700 font-medium shrink-0"
+                  >Active</span
+                >
+              }
+            </div>
+
+            <!-- Details Stack -->
+            <div class="space-y-1 text-xs text-ink/70 pt-0.5">
+              <div class="flex items-center gap-1.5 truncate">
+                <span class="text-ink/40">Email:</span>
+                <span class="truncate">{{ customer.email }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <span class="text-ink/40">Phone:</span>
+                  <span>{{ customer.phone || 'N/A' }}</span>
+                </div>
+                <div>
+                  <span class="text-ink/40">Joined:</span>
+                  <span>{{ customer.createdAt | date: 'MMM d, y' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end pt-2 border-t border-ink/5">
+              @if (customer.blocked) {
+                <button
+                  (click)="unblock(customer)"
+                  class="text-xs font-semibold text-wine hover:underline"
+                >
+                  Unblock Customer
+                </button>
+              } @else {
+                <button
+                  (click)="block(customer)"
+                  class="text-xs font-semibold text-ink/40 hover:underline"
+                >
+                  Block Customer
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
     </div>
 
+    <!-- Responsive Pagination Controls -->
     @if (totalPages() > 1) {
-      <div class="flex justify-center gap-2 mt-6">
+      <div class="flex items-center justify-center gap-1.5 sm:gap-2 mt-6 flex-wrap">
         @for (p of [].constructor(totalPages()); track $index) {
-          <button (click)="goToPage($index)" class="w-9 h-9 rounded-petal-sm text-sm font-body" [class]="page() === $index ? 'bg-wine text-ivory' : 'bg-white border border-ink/15'">
+          <button
+            (click)="goToPage($index)"
+            class="w-8 h-8 sm:w-9 sm:h-9 rounded-petal-sm text-xs sm:text-sm font-body transition-colors"
+            [class]="
+              page() === $index
+                ? 'bg-wine text-ivory font-semibold'
+                : 'bg-white border border-ink/15 hover:bg-ink/5 text-ink'
+            "
+          >
             {{ $index + 1 }}
           </button>
         }

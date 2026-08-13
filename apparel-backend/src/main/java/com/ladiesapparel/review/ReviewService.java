@@ -79,6 +79,7 @@ public class ReviewService {
         reviewRepository.save(review);
     }
 
+    @Transactional(readOnly = true)
     public PagedResponse<ReviewResponse> getApprovedReviews(Long productId, Pageable pageable) {
         Page<Review> page = reviewRepository.findByProductIdAndStatusOrderByCreatedAtDesc(
                 productId, ReviewStatus.APPROVED, pageable);
@@ -87,6 +88,7 @@ public class ReviewService {
 
     // ---------- Admin moderation ----------
 
+    @Transactional(readOnly = true)
     public PagedResponse<ReviewResponse> getPendingReviews(Pageable pageable) {
         Page<Review> page = reviewRepository.findByStatusOrderByCreatedAtAsc(ReviewStatus.PENDING, pageable);
         return PagedResponse.from(page.map(this::toResponse));

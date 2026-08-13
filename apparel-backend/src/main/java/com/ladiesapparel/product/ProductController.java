@@ -47,6 +47,43 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success("Product deactivated"));
     }
 
+    @PatchMapping("/api/admin/products/{id}/activate")
+    public ResponseEntity<ApiResponse<Object>> activate(@PathVariable Long id) {
+        productService.activateProduct(id);
+        return ResponseEntity.ok(ApiResponse.success("Product activated"));
+    }
+
+    /**
+     * Dedicated admin listing — deliberately NOT the same as the public storefront endpoint.
+     * The public one always forces active=true (customers should never see deactivated
+     * products); this one defaults to showing EVERYTHING so admins can actually find and
+     * reactivate a product they deactivated, instead of it silently vanishing forever.
+     */
+    @GetMapping("/api/admin/products")
+    public ResponseEntity<ApiResponse<PagedResponse<ProductResponse>>> adminSearch(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "ALL") String status, // ALL | ACTIVE | INACTIVE
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int pageSize,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        Boolean active = switch (status.toUpperCase()) {
+            case "ACTIVE" -> Boolean.TRUE;
+            case "INACTIVE" -> Boolean.FALSE;
+            default -> null; // ALL
+        };
+
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, pageSize, sort);
+
+        PagedResponse<ProductResponse> result = productService.search(
+                categoryId, null, null, null, null, keyword, active, pageable);
+
+        return ResponseEntity.ok(ApiResponse.success("Products fetched", result));
+    }
+
     @GetMapping("/api/admin/products/{id}")
     public ResponseEntity<ApiResponse<ProductResponse>> getOneForAdmin(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Product fetched", productService.getById(id)));

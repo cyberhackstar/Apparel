@@ -1,9 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { firstValueFrom } from 'rxjs';
 import { OrderService } from '../../../core/services/order.service';
 import { PaymentService } from '../../../core/services/payment.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -28,13 +27,6 @@ const TRACKING_STEPS = [
   templateUrl: './order-detail.component.html',
 })
 export class OrderDetailComponent implements OnInit {
-  private readonly route = inject(ActivatedRoute);
-  private readonly orderService = inject(OrderService);
-  private readonly paymentService = inject(PaymentService);
-  private readonly authService = inject(AuthService);
-  private readonly returnService = inject(ReturnService);
-  private readonly toastr = inject(ToastrService);
-
   order = signal<Order | null>(null);
   loading = signal(true);
   cancelling = signal(false);
@@ -46,6 +38,15 @@ export class OrderDetailComponent implements OnInit {
   showReturnForm = signal(false);
   returnReason = '';
   submittingReturn = signal(false);
+
+  constructor(
+    private route: ActivatedRoute,
+    private orderService: OrderService,
+    private paymentService: PaymentService,
+    private authService: AuthService,
+    private returnService: ReturnService,
+    private toastr: ToastrService,
+  ) {}
 
   ngOnInit(): void {
     this.route.paramMap.subscribe((params) => {
@@ -116,11 +117,10 @@ export class OrderDetailComponent implements OnInit {
 
     this.retryingPayment.set(true);
     try {
-      // Unwrapping the Observable into a Promise using firstValueFrom
-      const rzpOrder = await firstValueFrom(this.paymentService.createRazorpayOrder(o.orderNumber));
+      const rzpOrder = await this.paymentService.createRazorpayOrder(o.orderNumber).toPromise();
       const user = this.authService.currentUser();
       const result = await this.paymentService.openCheckout(
-        rzpOrder,
+        rzpOrder!,
         user?.fullName ?? '',
         user?.email ?? '',
         o.recipientPhone,

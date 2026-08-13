@@ -29,5 +29,3 @@ bin/
 ### Environment ###
 .env
 *.env.local
-.vscode/
-**/src/main/resources/application.yml

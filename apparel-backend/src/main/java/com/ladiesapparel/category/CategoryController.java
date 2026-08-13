@@ -37,9 +37,17 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success("Category deactivated"));
     }
 
+    @PatchMapping("/api/admin/categories/{id}/activate")
+    public ResponseEntity<ApiResponse<Object>> activate(@PathVariable Long id) {
+        categoryService.activateCategory(id);
+        return ResponseEntity.ok(ApiResponse.success("Category activated"));
+    }
+
     @GetMapping("/api/admin/categories")
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> listAllForAdmin() {
-        return ResponseEntity.ok(ApiResponse.success("Categories fetched", categoryService.getAllActiveFlat()));
+        // shows EVERY category, active or not — the old version only returned active ones,
+        // meaning a deactivated category (and its subcategories) had no way to be found again
+        return ResponseEntity.ok(ApiResponse.success("Categories fetched", categoryService.getAllForAdmin()));
     }
 
     @GetMapping("/api/admin/categories/{id}")

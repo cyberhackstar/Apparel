@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, EMPTY, finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { GoogleSignInButtonComponent } from '../../../shared/components/google-signin-button/google-signin-button.component';
 
@@ -12,19 +13,27 @@ import { GoogleSignInButtonComponent } from '../../../shared/components/google-s
   templateUrl: './login.component.html',
 })
 export class LoginComponent implements OnInit {
-  private readonly fb = inject(FormBuilder);
+  // Dependency Injection via inject()
+  private readonly fb = inject(NonNullableFormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  loading = signal(false);
+  // State Signals
+  readonly loading = signal(false);
 
+  // Strongly-typed non-nullable reactive form with proper validation
   readonly form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
+  get f() {
+    return this.form.controls;
+  }
+
   ngOnInit(): void {
+    // Auto-fill email if passed in query parameters (e.g. redirected from register/OTP page)
     const email = this.route.snapshot.queryParamMap.get('email');
     if (email) {
       this.form.patchValue({ email });
@@ -38,19 +47,46 @@ export class LoginComponent implements OnInit {
     }
 
     this.loading.set(true);
-    const { email, password } = this.form.getRawValue();
 
-    this.authService.login({ email: email!, password: password! }).subscribe({
-      next: (res) => {
-        const redirectTo =
-          res.data.role === 'ADMIN' || res.data.role === 'SUPER_ADMIN' ? '/admin' : '/';
+    const credentials = this.form.getRawValue();
+
+    this.authService
+      .login(credentials)
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        catchError(() => EMPTY), // Interceptors or global handlers deal with HTTP error notifications
+      )
+      .subscribe((res) => {
+        const userRole = res.data?.role;
+        const redirectTo = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' ? '/admin' : '/';
+
         this.router.navigate([redirectTo]);
-      },
-      error: () => this.loading.set(false),
-    });
+      });
   }
 
-  get f() {
-    return this.form.controls;
+  // Helper method for clean, reusable validation messages in template
+  getErrorMessage(controlName: keyof typeof this.form.controls): string {
+    const control = this.form.controls[controlName];
+
+    if (!control || !control.errors || !control.touched) {
+      return '';
+    }
+
+    if (control.errors['required']) {
+      return `${this.formatFieldName(controlName)} is required.`;
+    }
+    if (control.errors['email']) {
+      return 'Please enter a valid email address.';
+    }
+    if (control.errors['minlength']) {
+      const min = control.errors['minlength'].requiredLength;
+      return `${this.formatFieldName(controlName)} must be at least ${min} characters long.`;
+    }
+
+    return 'Invalid field value.';
+  }
+
+  private formatFieldName(name: string): string {
+    return name.charAt(0).toUpperCase() + name.slice(1);
   }
 }

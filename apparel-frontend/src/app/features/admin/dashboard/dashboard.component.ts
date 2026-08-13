@@ -1,8 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { catchError, EMPTY, finalize, forkJoin } from 'rxjs';
+import {
+  DashboardSummary,
+  LowStockVariant,
+  TopProduct,
+} from '../../../core/models/dashboard.model';
 import { AdminDashboardService } from '../../../core/services/admin-dashboard.service';
-import { DashboardSummary, LowStockVariant, TopProduct } from '../../../core/models/dashboard.model';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -11,21 +16,35 @@ import { DashboardSummary, LowStockVariant, TopProduct } from '../../../core/mod
   templateUrl: './dashboard.component.html',
 })
 export class AdminDashboardComponent implements OnInit {
-  summary = signal<DashboardSummary | null>(null);
-  topProducts = signal<TopProduct[]>([]);
-  lowStock = signal<LowStockVariant[]>([]);
-  loading = signal(true);
-  exporting = signal(false);
+  // Dependency Injection using inject()
+  private readonly dashboardService = inject(AdminDashboardService);
 
-  constructor(private dashboardService: AdminDashboardService) {}
+  // State Signals
+  readonly summary = signal<DashboardSummary | null>(null);
+  readonly topProducts = signal<TopProduct[]>([]);
+  readonly lowStock = signal<LowStockVariant[]>([]);
+  readonly loading = signal(true);
+  readonly exporting = signal(false);
 
   ngOnInit(): void {
-    this.dashboardService.getSummary().subscribe((s) => this.summary.set(s));
-    this.dashboardService.getTopProducts(5).subscribe((p) => this.topProducts.set(p));
-    this.dashboardService.getLowStock(5).subscribe((v) => {
-      this.lowStock.set(v);
-      this.loading.set(false);
-    });
+    this.loadDashboardData();
+  }
+
+  loadDashboardData(): void {
+    this.loading.set(true);
+
+    // Load parallel initial dashboard requests simultaneously
+    forkJoin({
+      summary: this.dashboardService.getSummary().pipe(catchError(() => EMPTY)),
+      topProducts: this.dashboardService.getTopProducts(5).pipe(catchError(() => EMPTY)),
+      lowStock: this.dashboardService.getLowStock(5).pipe(catchError(() => EMPTY)),
+    })
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe(({ summary, topProducts, lowStock }) => {
+        if (summary) this.summary.set(summary);
+        if (topProducts) this.topProducts.set(topProducts);
+        if (lowStock) this.lowStock.set(lowStock);
+      });
   }
 
   exportOrders(): void {
@@ -34,17 +53,21 @@ export class AdminDashboardComponent implements OnInit {
     const monthAgo = new Date();
     monthAgo.setDate(today.getDate() - 30);
 
-    this.dashboardService.exportOrdersCsv(monthAgo.toISOString(), today.toISOString()).subscribe({
-      next: (blob) => {
+    this.dashboardService
+      .exportOrdersCsv(monthAgo.toISOString(), today.toISOString())
+      .pipe(
+        finalize(() => this.exporting.set(false)),
+        catchError(() => EMPTY),
+      )
+      .subscribe((blob) => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = `orders-${today.toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        this.exporting.set(false);
-      },
-      error: () => this.exporting.set(false),
-    });
+      });
   }
 }
