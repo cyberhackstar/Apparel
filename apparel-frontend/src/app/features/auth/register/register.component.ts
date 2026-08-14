@@ -14,16 +14,13 @@ import { GoogleSignInButtonComponent } from '../../../shared/components/google-s
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {
-  // Dependency Injection via inject()
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly toastr = inject(ToastrService);
 
-  // State Signals
   readonly loading = signal(false);
 
-  // Strongly-typed reactive form
   readonly form = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(100)]],
     email: ['', [Validators.required, Validators.email]],
@@ -44,14 +41,19 @@ export class RegisterComponent {
 
     this.loading.set(true);
 
-    // Form value is strongly typed non-nullable strings
-    const payload = this.form.getRawValue();
+    const raw = this.form.getRawValue();
+    const payload = {
+      ...raw,
+      fullName: raw.fullName.trim(),
+      email: raw.email.trim().toLowerCase(),
+      phone: raw.phone.trim().replace(/\D/g, '').slice(-10),
+    };
 
     this.authService
       .register(payload)
       .pipe(
         finalize(() => this.loading.set(false)),
-        catchError(() => EMPTY), // Interceptors or global handlers deal with HTTP error UI
+        catchError(() => EMPTY),
       )
       .subscribe(() => {
         this.toastr.success('Check your email for the verification code.');
@@ -59,5 +61,44 @@ export class RegisterComponent {
           queryParams: { email: payload.email },
         });
       });
+  }
+
+  getErrorMessage(controlName: keyof typeof this.form.controls): string {
+    const control = this.form.controls[controlName];
+
+    if (!control || !control.errors || !control.touched) {
+      return '';
+    }
+
+    if (control.errors['required']) {
+      return `${this.formatFieldName(controlName)} is required.`;
+    }
+    if (control.errors['email']) {
+      return 'Please enter a valid email address.';
+    }
+    if (control.errors['pattern'] && controlName === 'phone') {
+      return 'Please enter a valid 10-digit Indian mobile number (starts with 6-9).';
+    }
+    if (control.errors['minlength']) {
+      const min = control.errors['minlength'].requiredLength;
+      return `${this.formatFieldName(controlName)} must be at least ${min} characters.`;
+    }
+    if (control.errors['maxlength']) {
+      const max = control.errors['maxlength'].requiredLength;
+      return `${this.formatFieldName(controlName)} cannot exceed ${max} characters.`;
+    }
+
+    return 'Invalid field value.';
+  }
+
+  private formatFieldName(name: string): string {
+    switch (name) {
+      case 'fullName':
+        return 'Full name';
+      case 'phone':
+        return 'Phone number';
+      default:
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    }
   }
 }

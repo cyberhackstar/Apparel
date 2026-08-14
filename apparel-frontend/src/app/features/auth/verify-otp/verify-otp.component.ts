@@ -1,8 +1,18 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, OnInit, QueryList, ViewChildren, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  QueryList,
+  ViewChildren,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { catchError, EMPTY, finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -11,20 +21,22 @@ import { AuthService } from '../../../core/services/auth.service';
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './verify-otp.component.html',
 })
-export class VerifyOtpComponent implements OnInit {
+export class VerifyOtpComponent implements OnInit, OnDestroy {
   @ViewChildren('digitInput') digitInputs!: QueryList<ElementRef<HTMLInputElement>>;
+
+  private readonly route = inject(ActivatedRoute);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly toastr = inject(ToastrService);
 
   email = '';
   digits = ['', '', '', '', '', ''];
-  loading = signal(false);
-  resending = signal(false);
+  readonly loading = signal(false);
+  readonly resending = signal(false);
 
-  constructor(
-    private route: ActivatedRoute,
-    private authService: AuthService,
-    private router: Router,
-    private toastr: ToastrService,
-  ) {}
+  // 30s Cooldown for OTP Resend
+  readonly resendCountdown = signal(0);
+  private timerInterval?: any;
 
   ngOnInit(): void {
     this.email = this.route.snapshot.queryParamMap.get('email') ?? '';
@@ -33,54 +45,90 @@ export class VerifyOtpComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+  }
+
   onDigitInput(index: number, event: Event): void {
-    const value = (event.target as HTMLInputElement).value.replace(/\D/g, '').slice(-1);
+    const input = event.target as HTMLInputElement;
+    const value = input.value.replace(/\D/g, '').slice(-1);
     this.digits[index] = value;
+    input.value = value;
 
     if (value && index < this.digits.length - 1) {
       this.digitInputs.get(index + 1)?.nativeElement.focus();
+    } else if (this.otpComplete) {
+      this.submit();
     }
   }
 
   onBackspace(index: number, event: KeyboardEvent): void {
-    if (event.key === 'Backspace' && !this.digits[index] && index > 0) {
-      this.digitInputs.get(index - 1)?.nativeElement.focus();
+    if (event.key === 'Backspace') {
+      if (!this.digits[index] && index > 0) {
+        this.digitInputs.get(index - 1)?.nativeElement.focus();
+      } else {
+        this.digits[index] = '';
+      }
     }
   }
 
   onPaste(event: ClipboardEvent): void {
+    event.preventDefault();
     const pasted = event.clipboardData?.getData('text').replace(/\D/g, '').slice(0, 6) ?? '';
     if (pasted.length === 6) {
       this.digits = pasted.split('');
-      event.preventDefault();
+      this.digitInputs.last?.nativeElement.focus();
+      this.submit();
     }
   }
 
   get otpComplete(): boolean {
-    return this.digits.every((d) => d !== '');
+    return this.digits.every((d) => d.trim() !== '');
   }
 
   submit(): void {
-    if (!this.otpComplete) return;
+    if (!this.otpComplete || this.loading()) return;
 
     this.loading.set(true);
-    this.authService.verifyOtp({ email: this.email, otp: this.digits.join('') }).subscribe({
-      next: () => {
+    const otp = this.digits.join('');
+
+    this.authService
+      .verifyOtp({ email: this.email.trim().toLowerCase(), otp })
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        catchError(() => EMPTY),
+      )
+      .subscribe(() => {
         this.toastr.success('Account verified! You can now log in.');
         this.router.navigate(['/auth/login'], { queryParams: { email: this.email } });
-      },
-      error: () => this.loading.set(false),
-    });
+      });
   }
 
   resend(): void {
+    if (this.resending() || this.resendCountdown() > 0) return;
+
     this.resending.set(true);
-    this.authService.resendOtp({ email: this.email, purpose: 'REGISTER' }).subscribe({
-      next: () => {
-        this.toastr.success('A new code has been sent to your email.');
-        this.resending.set(false);
-      },
-      error: () => this.resending.set(false),
-    });
+    this.authService
+      .resendOtp({ email: this.email.trim().toLowerCase(), purpose: 'REGISTER' })
+      .pipe(
+        finalize(() => this.resending.set(false)),
+        catchError(() => EMPTY),
+      )
+      .subscribe(() => {
+        this.toastr.success('A new verification code has been sent.');
+        this.startResendTimer();
+      });
+  }
+
+  private startResendTimer(): void {
+    this.resendCountdown.set(30);
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.timerInterval = setInterval(() => {
+      if (this.resendCountdown() > 0) {
+        this.resendCountdown.update((v) => v - 1);
+      } else {
+        clearInterval(this.timerInterval);
+      }
+    }, 1000);
   }
 }

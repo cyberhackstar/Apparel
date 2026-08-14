@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { catchError, EMPTY, finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -12,19 +13,23 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './reset-password.component.html',
 })
 export class ResetPasswordComponent implements OnInit {
-  loading = signal(false);
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly toastr = inject(ToastrService);
+
+  readonly loading = signal(false);
   email = '';
 
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private toastr = inject(ToastrService);
-
-  form = this.fb.group({
-    otp: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+  readonly form = this.fb.group({
+    otp: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
     newPassword: ['', [Validators.required, Validators.minLength(8)]],
   });
+
+  get f() {
+    return this.form.controls;
+  }
 
   ngOnInit(): void {
     this.email = this.route.snapshot.queryParamMap.get('email') ?? '';
@@ -43,17 +48,39 @@ export class ResetPasswordComponent implements OnInit {
     const { otp, newPassword } = this.form.getRawValue();
 
     this.authService
-      .resetPassword({ email: this.email, otp: otp!, newPassword: newPassword! })
-      .subscribe({
-        next: () => {
-          this.toastr.success('Password reset! You can now log in.');
-          this.router.navigate(['/auth/login'], { queryParams: { email: this.email } });
-        },
-        error: () => this.loading.set(false),
+      .resetPassword({
+        email: this.email.trim().toLowerCase(),
+        otp: otp.trim(),
+        newPassword: newPassword,
+      })
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        catchError(() => EMPTY),
+      )
+      .subscribe(() => {
+        this.toastr.success('Password reset successfully! You can now log in.');
+        this.router.navigate(['/auth/login'], { queryParams: { email: this.email } });
       });
   }
 
-  get f() {
-    return this.form.controls;
+  getErrorMessage(controlName: keyof typeof this.form.controls): string {
+    const control = this.form.controls[controlName];
+
+    if (!control || !control.errors || !control.touched) {
+      return '';
+    }
+
+    if (control.errors['required']) {
+      return controlName === 'otp' ? 'Verification code is required.' : 'New password is required.';
+    }
+    if (control.errors['pattern'] && controlName === 'otp') {
+      return 'Please enter the 6-digit numeric code sent to your email.';
+    }
+    if (control.errors['minlength'] && controlName === 'newPassword') {
+      const min = control.errors['minlength'].requiredLength;
+      return `Password must be at least ${min} characters long.`;
+    }
+
+    return 'Invalid field value.';
   }
 }

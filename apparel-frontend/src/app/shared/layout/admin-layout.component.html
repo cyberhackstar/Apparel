@@ -1,7 +1,7 @@
 <div class="min-h-screen flex bg-[#F5F5F3]">
   <!-- Mobile Header -->
   <header
-    class="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 flex items-center justify-between px-4 bg-ink text-ivory"
+    class="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 flex items-center justify-between px-4 bg-ink text-ivory shrink-0"
   >
     <button (click)="toggleDrawer()" class="p-2 -ml-2" aria-label="Open menu">
       <svg width="22" height="22" viewBox="0 0 24 24" class="fill-none stroke-current stroke-2">
@@ -14,28 +14,37 @@
 
   <!-- Drawer Backdrop -->
   @if (drawerOpen()) {
-    <div class="lg:hidden fixed inset-0 bg-black/50 z-40" (click)="closeDrawer()"></div>
+    <div
+      class="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+      (click)="closeDrawer()"
+    ></div>
   }
 
-  <!-- Sidebar Navigation -->
+  <!-- Sidebar Navigation Drawer -->
   <aside
-    class="w-64 bg-ink text-ivory shrink-0 flex flex-col fixed lg:sticky top-0 h-screen z-50 transition-transform duration-200 ease-out lg:translate-x-0"
+    class="w-64 bg-ink text-ivory shrink-0 flex flex-col fixed lg:sticky top-0 h-[100dvh] z-50 transition-transform duration-200 ease-out overscroll-contain lg:translate-x-0"
     [class.translate-x-0]="drawerOpen()"
     [class.-translate-x-full]="!drawerOpen()"
   >
-    <div class="px-6 py-6 border-b border-ivory/10 flex items-center justify-between">
+    <!-- Drawer Header -->
+    <div class="px-6 py-5 border-b border-ivory/10 flex items-center justify-between shrink-0">
       <div>
         <p class="font-display text-xl">Ladies Apparel</p>
         <p class="font-body text-xs text-ivory/40 mt-0.5">Admin Panel</p>
       </div>
-      <button (click)="closeDrawer()" class="lg:hidden p-1 text-ivory/60" aria-label="Close menu">
+      <button
+        (click)="closeDrawer()"
+        class="lg:hidden p-1 text-ivory/60 hover:text-ivory"
+        aria-label="Close menu"
+      >
         <svg width="20" height="20" viewBox="0 0 24 24" class="fill-none stroke-current stroke-2">
           <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
     </div>
 
-    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+    <!-- Nav Items (Scrollable) -->
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto overscroll-contain">
       @for (item of navItems; track item.path) {
         <a
           [routerLink]="item.path"
@@ -56,13 +65,18 @@
       }
     </nav>
 
-    <div class="px-3 py-4 border-t border-ivory/10">
-      <a routerLink="/" class="block px-3 py-2 font-body text-sm text-ivory/50 hover:text-ivory"
-        >&larr; Back to Storefront</a
+    <!-- Bottom Action Section (Lifted above Chrome & Bottom Tab Nav) -->
+    <div class="px-3 pt-3 pb-20 lg:pb-4 border-t border-ivory/10 shrink-0 bg-ink">
+      <a
+        routerLink="/"
+        (click)="closeDrawer()"
+        class="block px-3 py-2 font-body text-sm text-ivory/60 hover:text-ivory rounded-petal-sm hover:bg-ivory/5 transition-colors"
       >
+        &larr; Back to Storefront
+      </a>
       <button
         (click)="logout()"
-        class="w-full text-left px-3 py-2 font-body text-sm text-ivory/50 hover:text-ivory"
+        class="w-full text-left px-3 py-2 font-body text-sm text-ivory/60 hover:text-wine rounded-petal-sm hover:bg-ivory/5 transition-colors"
       >
         Log out
       </button>
@@ -76,14 +90,14 @@
 
   <!-- Mobile Bottom Tab Navigation -->
   <nav
-    class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-ink/10 flex items-stretch"
+    class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-ink/10 flex items-stretch h-14"
   >
     @for (item of mobileTabItems; track item.path) {
       <a
         [routerLink]="item.path"
         routerLinkActive="text-wine"
         [routerLinkActiveOptions]="{ exact: item.exact }"
-        class="flex-1 flex flex-col items-center justify-center py-2 text-ink/50 text-[11px] font-body gap-0.5"
+        class="flex-1 flex flex-col items-center justify-center py-1.5 text-ink/50 text-[11px] font-body gap-0.5"
       >
         <svg
           width="20"
@@ -98,7 +112,7 @@
     }
     <button
       (click)="toggleDrawer()"
-      class="flex-1 flex flex-col items-center justify-center py-2 text-ink/50 text-[11px] font-body gap-0.5"
+      class="flex-1 flex flex-col items-center justify-center py-1.5 text-ink/50 text-[11px] font-body gap-0.5"
     >
       <svg width="20" height="20" viewBox="0 0 24 24" class="fill-none stroke-current stroke-[1.8]">
         <path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round" stroke-linejoin="round" />

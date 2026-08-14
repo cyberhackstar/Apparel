@@ -36,7 +36,7 @@ public class ProductController {
 
     @PutMapping("/api/admin/products/{id}")
     public ResponseEntity<ApiResponse<ProductResponse>> update(@PathVariable Long id,
-                                                                @Valid @RequestBody ProductRequest request) {
+            @Valid @RequestBody ProductRequest request) {
         ProductResponse response = productService.updateProduct(id, request);
         return ResponseEntity.ok(ApiResponse.success("Product updated", response));
     }
@@ -53,17 +53,11 @@ public class ProductController {
         return ResponseEntity.ok(ApiResponse.success("Product activated"));
     }
 
-    /**
-     * Dedicated admin listing — deliberately NOT the same as the public storefront endpoint.
-     * The public one always forces active=true (customers should never see deactivated
-     * products); this one defaults to showing EVERYTHING so admins can actually find and
-     * reactivate a product they deactivated, instead of it silently vanishing forever.
-     */
     @GetMapping("/api/admin/products")
     public ResponseEntity<ApiResponse<PagedResponse<ProductResponse>>> adminSearch(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "ALL") String status, // ALL | ACTIVE | INACTIVE
+            @RequestParam(defaultValue = "ALL") String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "15") int pageSize,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -72,11 +66,13 @@ public class ProductController {
         Boolean active = switch (status.toUpperCase()) {
             case "ACTIVE" -> Boolean.TRUE;
             case "INACTIVE" -> Boolean.FALSE;
-            default -> null; // ALL
+            default -> null;
         };
 
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, pageSize, sort);
+        // Enforce deterministic sorting by always appending unique ID as tie-breaker
+        Sort primarySort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Sort deterministicSort = primarySort.and(Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(page, pageSize, deterministicSort);
 
         PagedResponse<ProductResponse> result = productService.search(
                 categoryId, null, null, null, null, keyword, active, pageable);
@@ -91,22 +87,22 @@ public class ProductController {
 
     @PostMapping("/api/admin/products/{id}/variants")
     public ResponseEntity<ApiResponse<Object>> addVariant(@PathVariable Long id,
-                                                           @Valid @RequestBody ProductVariantRequest request) {
+            @Valid @RequestBody ProductVariantRequest request) {
         productService.addVariant(id, request);
         return ResponseEntity.ok(ApiResponse.success("Variant added"));
     }
 
     @PatchMapping("/api/admin/variants/{variantId}/stock")
     public ResponseEntity<ApiResponse<Object>> updateStock(@PathVariable Long variantId,
-                                                            @RequestParam int quantity) {
+            @RequestParam int quantity) {
         productService.updateStock(variantId, quantity);
         return ResponseEntity.ok(ApiResponse.success("Stock updated"));
     }
 
     @PostMapping(value = "/api/admin/products/{id}/images", consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<ProductImageResponse>> uploadImage(@PathVariable Long id,
-                                                                          @RequestParam("file") MultipartFile file,
-                                                                          @RequestParam(defaultValue = "false") boolean isPrimary) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(defaultValue = "false") boolean isPrimary) {
         ProductImageResponse response = productService.uploadImage(id, file, isPrimary);
         return ResponseEntity.ok(ApiResponse.success("Image uploaded", response));
     }
@@ -131,7 +127,8 @@ public class ProductController {
     }
 
     @GetMapping("/api/public/products/batch")
-    public ResponseEntity<ApiResponse<java.util.List<ProductResponse>>> getByIds(@RequestParam java.util.List<Long> ids) {
+    public ResponseEntity<ApiResponse<java.util.List<ProductResponse>>> getByIds(
+            @RequestParam java.util.List<Long> ids) {
         return ResponseEntity.ok(ApiResponse.success("Products fetched", productService.getByIds(ids)));
     }
 
@@ -148,8 +145,10 @@ public class ProductController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
 
-        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-        Pageable pageable = PageRequest.of(page, pageSize, sort);
+        // Enforce deterministic sorting by always appending unique ID as tie-breaker
+        Sort primarySort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Sort deterministicSort = primarySort.and(Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(page, pageSize, deterministicSort);
 
         PagedResponse<ProductResponse> result = productService.search(
                 categoryId, minPrice, maxPrice, size, color, keyword, true, pageable);

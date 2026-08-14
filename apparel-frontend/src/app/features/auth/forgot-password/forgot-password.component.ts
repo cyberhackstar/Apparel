@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { catchError, EMPTY, finalize } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -12,16 +13,20 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './forgot-password.component.html',
 })
 export class ForgotPasswordComponent {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
-  private toastr = inject(ToastrService);
+  private readonly fb = inject(NonNullableFormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly toastr = inject(ToastrService);
 
-  loading = signal(false);
+  readonly loading = signal(false);
 
-  form = this.fb.group({
+  readonly form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
   });
+
+  get f() {
+    return this.form.controls;
+  }
 
   submit(): void {
     if (this.form.invalid) {
@@ -30,18 +35,34 @@ export class ForgotPasswordComponent {
     }
 
     this.loading.set(true);
-    const { email } = this.form.getRawValue();
+    const email = this.form.getRawValue().email.trim().toLowerCase();
 
-    this.authService.forgotPassword({ email: email! }).subscribe({
-      next: () => {
+    this.authService
+      .forgotPassword({ email })
+      .pipe(
+        finalize(() => this.loading.set(false)),
+        catchError(() => EMPTY),
+      )
+      .subscribe(() => {
         this.toastr.success('A reset code has been sent to your email.');
         this.router.navigate(['/auth/reset-password'], { queryParams: { email } });
-      },
-      error: () => this.loading.set(false),
-    });
+      });
   }
 
-  get f() {
-    return this.form.controls;
+  getErrorMessage(controlName: keyof typeof this.form.controls): string {
+    const control = this.form.controls[controlName];
+
+    if (!control || !control.errors || !control.touched) {
+      return '';
+    }
+
+    if (control.errors['required']) {
+      return 'Email address is required.';
+    }
+    if (control.errors['email']) {
+      return 'Please enter a valid email address.';
+    }
+
+    return 'Invalid field value.';
   }
 }

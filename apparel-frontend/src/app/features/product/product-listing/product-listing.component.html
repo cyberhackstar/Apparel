@@ -1,22 +1,32 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-  <div class="flex items-center justify-between mb-6">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6">
+  <!-- Top Bar: Title & Sort/Filter Controls -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <h1 class="font-display text-3xl">
+      <h1 class="font-display text-2xl sm:text-3xl text-ink">
         @if (filters.keyword) {
           Results for "{{ filters.keyword }}"
         } @else {
           All Products
         }
       </h1>
-      <p class="font-body text-sm text-ink/50 mt-1">{{ totalElements() }} products</p>
+      <p class="font-body text-xs sm:text-sm text-ink/50 mt-1">
+        {{ totalElements() }} products found
+      </p>
     </div>
 
-    <div class="flex items-center gap-3">
-      <button class="lg:hidden btn-secondary !px-4 !py-2 text-sm" (click)="filtersOpen.set(!filtersOpen())">
+    <div class="flex items-center justify-between sm:justify-end gap-3">
+      <button
+        class="lg:hidden btn-secondary !px-4 !py-2 text-xs sm:text-sm flex items-center gap-1.5"
+        (click)="filtersOpen.set(!filtersOpen())"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" class="fill-none stroke-current stroke-2">
+          <path d="M4 6h16M7 12h10M10 18h4" stroke-linecap="round" />
+        </svg>
         Filters
       </button>
+
       <select
-        class="input-field !py-2 text-sm w-auto"
+        class="input-field !py-2 text-xs sm:text-sm w-auto"
         [value]="filters.sortBy + ':' + filters.sortDir"
         (change)="onSortChange($any($event.target).value)"
       >
@@ -29,18 +39,24 @@
     </div>
   </div>
 
-  <div class="flex gap-8">
-    <!-- Filters sidebar -->
-    <aside class="hidden lg:block w-64 shrink-0 space-y-8">
+  <div class="flex gap-8 items-start">
+    <!-- Desktop Filters Sidebar -->
+    <aside
+      class="hidden lg:block w-64 shrink-0 space-y-8 bg-white p-6 rounded-petal-sm border border-ink/5 sticky top-24"
+    >
       <div>
-        <h3 class="font-body font-semibold text-sm mb-3">Category</h3>
+        <h3 class="font-body font-semibold text-sm mb-3 text-ink">Category</h3>
         <ul class="space-y-1 font-body text-sm">
           @for (cat of categories(); track cat.id) {
             <li>
               <button
                 (click)="applyFilter({ categoryId: cat.id })"
-                class="text-left w-full py-1"
-                [class]="filters.categoryId === cat.id ? 'text-wine font-semibold' : 'text-ink/70 hover:text-ink'"
+                class="text-left w-full py-1 transition-colors"
+                [class]="
+                  filters.categoryId === cat.id
+                    ? 'text-wine font-semibold'
+                    : 'text-ink/70 hover:text-ink'
+                "
               >
                 {{ cat.name }}
               </button>
@@ -50,8 +66,12 @@
                     <li>
                       <button
                         (click)="applyFilter({ categoryId: sub.id })"
-                        class="text-left w-full py-1 text-xs"
-                        [class]="filters.categoryId === sub.id ? 'text-wine font-semibold' : 'text-ink/50 hover:text-ink'"
+                        class="text-left w-full py-1 text-xs transition-colors"
+                        [class]="
+                          filters.categoryId === sub.id
+                            ? 'text-wine font-semibold'
+                            : 'text-ink/50 hover:text-ink'
+                        "
                       >
                         {{ sub.name }}
                       </button>
@@ -65,13 +85,17 @@
       </div>
 
       <div>
-        <h3 class="font-body font-semibold text-sm mb-3">Size</h3>
+        <h3 class="font-body font-semibold text-sm mb-3 text-ink">Size</h3>
         <div class="flex flex-wrap gap-2">
           @for (size of availableSizes; track size) {
             <button
               (click)="applyFilter({ size: filters.size === size ? undefined : size })"
-              class="w-10 h-10 rounded-petal-sm border text-sm font-body"
-              [class]="filters.size === size ? 'bg-wine text-ivory border-wine' : 'border-ink/20 hover:border-wine'"
+              class="w-10 h-10 rounded-petal-sm border text-sm font-body transition-colors"
+              [class]="
+                filters.size === size
+                  ? 'bg-wine text-ivory border-wine font-semibold'
+                  : 'border-ink/20 hover:border-wine text-ink'
+              "
             >
               {{ size }}
             </button>
@@ -80,13 +104,25 @@
       </div>
 
       <div>
-        <h3 class="font-body font-semibold text-sm mb-3">Price</h3>
+        <h3 class="font-body font-semibold text-sm mb-3 text-ink">Price Range</h3>
         <div class="space-y-2 font-body text-sm">
-          @for (range of [[0,999],[1000,1999],[2000,3999],[4000,9999]]; track range) {
+          @for (
+            range of [
+              [0, 999],
+              [1000, 1999],
+              [2000, 3999],
+              [4000, 9999],
+            ];
+            track range
+          ) {
             <button
               (click)="applyFilter({ minPrice: range[0], maxPrice: range[1] })"
-              class="block text-left w-full"
-              [class]="filters.minPrice === range[0] ? 'text-wine font-semibold' : 'text-ink/70 hover:text-ink'"
+              class="block text-left w-full transition-colors"
+              [class]="
+                filters.minPrice === range[0]
+                  ? 'text-wine font-semibold'
+                  : 'text-ink/70 hover:text-ink'
+              "
             >
               ₹{{ range[0] }} – ₹{{ range[1] }}
             </button>
@@ -94,73 +130,142 @@
         </div>
       </div>
 
-      <button (click)="clearFilters()" class="font-body text-sm text-wine hover:underline">Clear all filters</button>
+      <div class="pt-2 border-t border-ink/5">
+        <button
+          (click)="clearFilters()"
+          class="font-body text-xs sm:text-sm text-wine hover:underline font-semibold"
+        >
+          Clear all filters
+        </button>
+      </div>
     </aside>
 
-    <!-- Mobile filters -->
+    <!-- Mobile Filters Slide-Over Drawer -->
     @if (filtersOpen()) {
-      <div class="lg:hidden fixed inset-0 z-50 bg-ink/40" (click)="filtersOpen.set(false)">
-        <div class="absolute right-0 top-0 bottom-0 w-80 bg-ivory p-6 overflow-y-auto" (click)="$event.stopPropagation()">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="font-display text-xl">Filters</h3>
-            <button (click)="filtersOpen.set(false)" class="text-2xl leading-none">&times;</button>
-          </div>
-          <h3 class="font-body font-semibold text-sm mb-3">Category</h3>
-          <ul class="space-y-1 font-body text-sm mb-6">
-            @for (cat of categories(); track cat.id) {
-              <li>
-                <button (click)="applyFilter({ categoryId: cat.id }); filtersOpen.set(false)" class="text-left w-full text-ink/70 py-1">
-                  {{ cat.name }}
-                </button>
-                @if (cat.subCategories && cat.subCategories.length > 0) {
-                  <ul class="pl-3 space-y-1 mb-1 border-l border-ink/10">
-                    @for (sub of cat.subCategories; track sub.id) {
-                      <li>
-                        <button (click)="applyFilter({ categoryId: sub.id }); filtersOpen.set(false)" class="text-left w-full text-ink/50 text-xs py-1">
-                          {{ sub.name }}
-                        </button>
-                      </li>
-                    }
-                  </ul>
-                }
-              </li>
-            }
-          </ul>
-          <h3 class="font-body font-semibold text-sm mb-3">Size</h3>
-          <div class="flex flex-wrap gap-2 mb-6">
-            @for (size of availableSizes; track size) {
+      <div
+        class="lg:hidden fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm"
+        (click)="filtersOpen.set(false)"
+      >
+        <div
+          class="absolute right-0 top-0 bottom-0 w-85 max-w-[85vw] bg-ivory p-6 overflow-y-auto shadow-2xl flex flex-col justify-between"
+          (click)="$event.stopPropagation()"
+        >
+          <div class="space-y-6">
+            <div class="flex justify-between items-center border-b border-ink/10 pb-4">
+              <h3 class="font-display text-xl text-ink">Filters</h3>
               <button
-                (click)="applyFilter({ size }); filtersOpen.set(false)"
-                class="w-10 h-10 rounded-petal-sm border text-sm font-body border-ink/20"
+                (click)="filtersOpen.set(false)"
+                class="text-2xl leading-none text-ink/60 hover:text-ink"
               >
-                {{ size }}
+                &times;
               </button>
-            }
+            </div>
+
+            <!-- Categories -->
+            <div>
+              <h3 class="font-body font-semibold text-sm mb-3 text-ink">Category</h3>
+              <ul class="space-y-1.5 font-body text-sm">
+                @for (cat of categories(); track cat.id) {
+                  <li>
+                    <button
+                      (click)="applyFilter({ categoryId: cat.id }); filtersOpen.set(false)"
+                      class="text-left w-full py-1 font-medium"
+                      [class]="
+                        filters.categoryId === cat.id ? 'text-wine font-semibold' : 'text-ink/70'
+                      "
+                    >
+                      {{ cat.name }}
+                    </button>
+                    @if (cat.subCategories && cat.subCategories.length > 0) {
+                      <ul class="pl-3 space-y-1 my-1 border-l border-ink/10">
+                        @for (sub of cat.subCategories; track sub.id) {
+                          <li>
+                            <button
+                              (click)="applyFilter({ categoryId: sub.id }); filtersOpen.set(false)"
+                              class="text-left w-full text-xs py-1"
+                              [class]="
+                                filters.categoryId === sub.id
+                                  ? 'text-wine font-semibold'
+                                  : 'text-ink/50'
+                              "
+                            >
+                              {{ sub.name }}
+                            </button>
+                          </li>
+                        }
+                      </ul>
+                    }
+                  </li>
+                }
+              </ul>
+            </div>
+
+            <!-- Sizes -->
+            <div>
+              <h3 class="font-body font-semibold text-sm mb-3 text-ink">Size</h3>
+              <div class="flex flex-wrap gap-2">
+                @for (size of availableSizes; track size) {
+                  <button
+                    (click)="
+                      applyFilter({ size: filters.size === size ? undefined : size });
+                      filtersOpen.set(false)
+                    "
+                    class="w-10 h-10 rounded-petal-sm border text-sm font-body transition-colors"
+                    [class]="
+                      filters.size === size
+                        ? 'bg-wine text-ivory border-wine font-semibold'
+                        : 'border-ink/20 bg-white text-ink'
+                    "
+                  >
+                    {{ size }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobile Drawer Footer Actions -->
+          <div class="pt-4 border-t border-ink/10 flex items-center justify-between mt-6">
+            <button
+              (click)="clearFilters(); filtersOpen.set(false)"
+              class="font-body text-xs text-wine font-semibold hover:underline"
+            >
+              Clear all
+            </button>
+            <button (click)="filtersOpen.set(false)" class="btn-primary !py-2 !px-5 text-xs">
+              View Results
+            </button>
           </div>
         </div>
       </div>
     }
 
-    <!-- Product grid -->
-    <div class="flex-1">
+    <!-- Product Grid & Loading State -->
+    <div class="flex-1 min-w-0">
       @if (loading()) {
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-10">
-          @for (i of [1,2,3,4,5,6]; track i) {
-            <div class="animate-pulse">
-              <div class="rounded-petal bg-blush aspect-[4/5] mb-3"></div>
-              <div class="h-4 bg-blush rounded w-3/4 mb-2"></div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 sm:gap-x-5 gap-y-8 sm:gap-y-10">
+          @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+            <div class="animate-pulse space-y-3">
+              <div class="rounded-petal bg-blush aspect-[4/5]"></div>
+              <div class="h-4 bg-blush rounded w-3/4"></div>
               <div class="h-4 bg-blush rounded w-1/2"></div>
             </div>
           }
         </div>
       } @else if (products().length === 0) {
-        <div class="text-center py-24">
-          <p class="font-display text-2xl mb-2">No products found</p>
-          <p class="font-body text-ink/50 mb-6">Try adjusting your filters or search terms.</p>
-          <button (click)="clearFilters()" class="btn-secondary">Clear filters</button>
+        <div class="card text-center py-16 sm:py-24 px-4 space-y-3">
+          <p class="font-display text-xl sm:text-2xl text-ink">No products found</p>
+          <p class="font-body text-xs sm:text-sm text-ink/50 max-w-sm mx-auto">
+            Try adjusting your filters or search terms to find what you are looking for.
+          </p>
+          <div class="pt-2">
+            <button (click)="clearFilters()" class="btn-secondary !py-2 !px-6 text-xs sm:text-sm">
+              Clear filters
+            </button>
+          </div>
         </div>
       } @else {
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-10">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 sm:gap-x-5 gap-y-8 sm:gap-y-10">
           @for (product of products(); track product.id) {
             <app-product-card
               [product]="product"
@@ -170,13 +275,18 @@
           }
         </div>
 
+        <!-- Responsive Pagination -->
         @if (totalPages() > 1) {
-          <div class="flex justify-center gap-2 mt-12">
+          <div class="flex items-center justify-center gap-1.5 sm:gap-2 mt-10 sm:mt-12 flex-wrap">
             @for (page of pageNumbers; track page) {
               <button
                 (click)="goToPage(page)"
-                class="w-9 h-9 rounded-petal-sm text-sm font-body"
-                [class]="filters.page === page ? 'bg-wine text-ivory' : 'bg-white border border-ink/15 hover:border-wine'"
+                class="w-8 h-8 sm:w-9 sm:h-9 rounded-petal-sm text-xs sm:text-sm font-body transition-colors"
+                [class]="
+                  filters.page === page
+                    ? 'bg-wine text-ivory font-semibold'
+                    : 'bg-white border border-ink/15 hover:border-wine text-ink'
+                "
               >
                 {{ page + 1 }}
               </button>

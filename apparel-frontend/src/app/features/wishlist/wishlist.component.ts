@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { WishlistService } from '../../core/services/wishlist.service';
@@ -11,13 +11,16 @@ import { WishlistService } from '../../core/services/wishlist.service';
   templateUrl: './wishlist.component.html',
 })
 export class WishlistComponent implements OnInit {
-  constructor(public wishlistService: WishlistService, private toastr: ToastrService) {}
+  public readonly wishlistService = inject(WishlistService);
+  private readonly toastr = inject(ToastrService);
 
   ngOnInit(): void {
     this.wishlistService.loadWishlist();
   }
 
   remove(productId: number): void {
-    this.wishlistService.toggle(productId).subscribe(() => this.toastr.info('Removed from wishlist.'));
+    this.wishlistService.toggle(productId).subscribe({
+      next: () => this.toastr.info('Removed from wishlist.'),
+    });
   }
 }

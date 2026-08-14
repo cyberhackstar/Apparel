@@ -1,5 +1,6 @@
 package com.ladiesapparel.email;
 
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,124 +15,259 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+  private final JavaMailSender mailSender;
 
-    @Value("${app.mail.from}")
-    private String fromEmail;
+  @Value("${app.mail.from:apparel@bhawesh.shop}")
+  private String fromEmail;
 
-    private static final String WINE = "#7A2E38";
-    private static final String IVORY = "#FAF7F2";
-    private static final String BLUSH = "#F1DDE0";
-    private static final String INK = "#2B2420";
-    private static final String GOLD = "#C9A24B";
+  @Value("${app.mail.sender-name:Ladies Apparel}")
+  private String senderName;
 
-    @Async
-    public void sendOtpEmail(String toEmail, String otpCode, String purposeLabel) {
-        String body = """
-                <p style="margin:0 0 16px;">Hi,</p>
-                <p style="margin:0 0 24px;">Use the code below to complete <strong>%s</strong>. This code expires shortly, so don't wait too long.</p>
-                <div style="text-align:center; margin: 32px 0;">
-                  <span style="display:inline-block; font-family:Georgia,serif; font-size:36px; font-weight:700;
-                               letter-spacing:8px; color:%s; background:%s; padding:18px 28px; border-radius:12px 4px 12px 4px;">
-                    %s
-                  </span>
-                </div>
-                <p style="margin:0; color:#777;">If you didn't request this, you can safely ignore this email — no changes will be made to your account.</p>
-                """.formatted(escape(purposeLabel), WINE, BLUSH, otpCode);
+  // Theme Tokens
+  private static final String WINE = "#7A2E38";
+  private static final String WINE_DARK = "#5E2129";
+  private static final String WINE_LIGHT = "#93414C";
+  private static final String BLUSH = "#F1DDE0";
+  private static final String IVORY = "#FAF7F2";
+  private static final String INK = "#2B2420";
+  private static final String GOLD = "#C9A24B";
 
-        send(toEmail, "Your verification code for " + purposeLabel, wrap("Verification Code", body));
+  // Petal Border Radius (Signature UI Motif)
+  private static final String RADIUS_PETAL = "28px 8px 28px 8px";
+  private static final String RADIUS_PETAL_SM = "14px 4px 14px 4px";
+
+  @Async
+  public void sendOtpEmail(String toEmail, String otpCode, String purposeLabel) {
+    String body = """
+        <p style="margin:0 0 16px; font-size:15px; color:%s;">Hello,</p>
+        <p style="margin:0 0 24px; font-size:15px; line-height:1.6; color:%s;">
+          Use the verification code below to complete your <strong>%s</strong>. This code is valid for 10 minutes.
+        </p>
+
+        <div style="text-align:center; margin: 32px 0;">
+          <div style="display:inline-block; font-family:'Fraunces', Georgia, 'Times New Roman', serif; font-size:36px; font-weight:700;
+                      letter-spacing:10px; color:%s; background-color:%s; padding:18px 36px;
+                      border-radius:%s; border:1px solid rgba(122,46,56,0.2); box-shadow:0 4px 16px -2px rgba(122,46,56,0.15);">
+            %s
+          </div>
+        </div>
+
+        <p style="margin:0; font-size:13px; color:%s; line-height:1.5;">
+          If you did not initiate this request, you can safely ignore this email. No changes will be made to your account.
+        </p>
+        """
+        .formatted(INK, INK, escape(purposeLabel), WINE, BLUSH, RADIUS_PETAL_SM, escape(otpCode), INK + "80");
+
+    send(toEmail, "Your Verification Code — " + purposeLabel, wrap("Verification Code", "Authentication", body));
+  }
+
+  @Async
+  public void sendOrderConfirmationEmail(String toEmail, String orderNumber, String totalAmount) {
+    String body = """
+        <p style="margin:0 0 16px; font-size:15px; color:%s;">Hello,</p>
+        <p style="margin:0 0 24px; font-size:15px; line-height:1.6; color:%s;">
+          Thank you for shopping with us! We have received your order and our artisans are currently preparing your package.
+        </p>
+
+        <table role="presentation" style="width:100%%; border-collapse:collapse; margin-bottom:28px;">
+          <tr>
+            <td style="padding:22px 24px; background-color:%s; border-radius:%s; border:1px solid rgba(122,46,56,0.12);">
+              <table role="presentation" style="width:100%%; border-collapse:collapse;">
+                <tr>
+                  <td style="padding-bottom:14px;">
+                    <p style="margin:0 0 4px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; color:%s;">Order Reference</p>
+                    <p style="margin:0; font-family:'Fraunces', Georgia, serif; font-size:20px; font-weight:700; color:%s;">#%s</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="border-top:1px solid rgba(122,46,56,0.15); padding-top:14px;">
+                    <p style="margin:0 0 4px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; color:%s;">Grand Total</p>
+                    <p style="margin:0; font-family:'Fraunces', Georgia, serif; font-size:24px; font-weight:700; color:%s;">₹%s</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <div style="text-align:center; margin: 28px 0 20px;">
+          <a href="https://apparel.bhawesh.shop/orders/%s"
+             style="display:inline-block; background-color:%s; color:%s; font-family:'Manrope', Arial, sans-serif; font-size:13px; font-weight:600;
+                    letter-spacing:0.5px; text-decoration:none; padding:14px 28px; border-radius:%s; box-shadow:0 4px 16px -2px rgba(122,46,56,0.3);">
+            Track Your Order &rarr;
+          </a>
+        </div>
+
+        <p style="margin:20px 0 0; font-size:13px; color:%s; line-height:1.5; text-align:center;">
+          We will send you another update the moment your package is dispatched.
+        </p>
+        """
+        .formatted(INK, INK, BLUSH, RADIUS_PETAL_SM, WINE, INK, escape(orderNumber), WINE, WINE, escape(totalAmount),
+            escape(orderNumber), WINE, IVORY, RADIUS_PETAL_SM, INK + "80");
+
+    send(toEmail, "Order Confirmed — #" + orderNumber, wrap("Order Confirmed", "Thank you for your purchase", body));
+  }
+
+  @Async
+  public void sendOrderStatusUpdateEmail(String toEmail, String orderNumber, String newStatus) {
+    String body = """
+        <p style="margin:0 0 16px; font-size:15px; color:%s;">Hello,</p>
+        <p style="margin:0 0 24px; font-size:15px; line-height:1.6; color:%s;">
+          The status of your order <strong>#%s</strong> has been updated:
+        </p>
+
+        <div style="text-align:center; margin: 32px 0;">
+          <span style="display:inline-block; font-family:'Manrope', Arial, sans-serif; font-size:13px; font-weight:700;
+                       letter-spacing:1.5px; text-transform:uppercase; color:%s; background-color:%s;
+                       padding:10px 24px; border-radius:%s; border:1px solid rgba(122,46,56,0.2);">
+            %s
+          </span>
+        </div>
+
+        <div style="text-align:center; margin: 24px 0 20px;">
+          <a href="https://apparel.bhawesh.shop/orders/%s"
+             style="display:inline-block; background-color:%s; color:%s; font-family:'Manrope', Arial, sans-serif; font-size:13px; font-weight:600;
+                    letter-spacing:0.5px; text-decoration:none; padding:12px 24px; border-radius:%s;">
+            View Order Details
+          </a>
+        </div>
+
+        <p style="margin:20px 0 0; font-size:13px; color:%s; line-height:1.5; text-align:center;">
+          You can view full tracking history anytime in your account dashboard.
+        </p>
+        """
+        .formatted(INK, INK, escape(orderNumber), WINE, BLUSH, RADIUS_PETAL_SM, escape(newStatus), escape(orderNumber),
+            WINE, IVORY, RADIUS_PETAL_SM, INK + "80");
+
+    send(toEmail, "Update on Order #" + orderNumber, wrap("Order Status Update", "Fulfillment Notice", body));
+  }
+
+  @Async
+  public void sendWelcomeEmail(String toEmail, String fullName) {
+    String body = """
+        <p style="margin:0 0 16px; font-size:15px; color:%s;">Dear %s,</p>
+        <p style="margin:0 0 20px; font-size:15px; line-height:1.6; color:%s;">
+          Welcome to the Ladies Apparel family. We are thrilled to have you with us!
+        </p>
+        <p style="margin:0 0 24px; font-size:15px; line-height:1.6; color:%s;">
+          Discover our signature collections of handcrafted Indian ethnic weaves and contemporary silhouettes designed to be lived in.
+        </p>
+
+        <div style="text-align:center; margin: 32px 0;">
+          <a href="https://apparel.bhawesh.shop/products"
+             style="display:inline-block; background-color:%s; color:%s; font-family:'Manrope', Arial, sans-serif; font-size:13px; font-weight:600;
+                    letter-spacing:0.5px; text-decoration:none; padding:14px 30px; border-radius:%s; box-shadow:0 4px 16px -2px rgba(122,46,56,0.3);">
+            Explore the Collection
+          </a>
+        </div>
+        """
+        .formatted(INK, escape(fullName), INK, INK, WINE, IVORY, RADIUS_PETAL_SM);
+
+    send(toEmail, "Welcome to Ladies Apparel", wrap("Welcome to the Atelier", "Crafted for Elegance", body));
+  }
+
+  private void send(String toEmail, String subject, String htmlBody) {
+    try {
+      MimeMessage message = mailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+
+      helper.setFrom(new InternetAddress(fromEmail, senderName));
+      helper.setTo(toEmail);
+      helper.setSubject(subject);
+      helper.setText(htmlBody, true);
+
+      mailSender.send(message);
+      log.info("Email sent successfully to: {} with subject: {}", toEmail, subject);
+    } catch (Exception e) {
+      log.error("Failed to send email to {}: {}", toEmail, e.getMessage(), e);
     }
+  }
 
-    @Async
-    public void sendOrderConfirmationEmail(String toEmail, String orderNumber, String totalAmount) {
-        String body = """
-                <p style="margin:0 0 16px;">Hi,</p>
-                <p style="margin:0 0 24px;">Thank you for shopping with us! Your order has been placed successfully and we're getting it ready.</p>
-                <table style="width:100%%; border-collapse:collapse; margin-bottom:24px;">
+  /**
+   * Master Responsive Email Template Wrapper adhering to the Ladies Apparel
+   * design system.
+   */
+  private String wrap(String heading, String eyebrow, String bodyHtml) {
+    return """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+          <!--[if mso]>
+          <noscript>
+            <xml>
+              <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+              </o:OfficeDocumentSettings>
+            </xml>
+          </noscript>
+          <![endif]-->
+        </head>
+        <body style="margin:0; padding:0; background-color:%s; font-family:'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:%s; -webkit-font-smoothing:antialiased;">
+          <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" border="0" style="background-color:%s; width:100%%; margin:0 auto; padding:32px 12px;">
+            <tr>
+              <td align="center">
+
+                <!-- Main Card Container -->
+                <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px; width:100%%; background-color:#FFFFFF; border-radius:%s; overflow:hidden; box-shadow:0 8px 32px -4px rgba(43,36,32,0.08); border:1px solid rgba(43,36,32,0.06);">
+
+                  <!-- Header Banner -->
                   <tr>
-                    <td style="padding:16px; background:%s; border-radius:12px 4px 12px 4px;">
-                      <p style="margin:0 0 4px; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:%s;">Order Number</p>
-                      <p style="margin:0 0 16px; font-size:18px; font-weight:700; color:%s;">%s</p>
-                      <p style="margin:0 0 4px; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:%s;">Total</p>
-                      <p style="margin:0; font-size:18px; font-weight:700; color:%s;">Rs. %s</p>
+                    <td style="background-color:%s; padding:36px 32px 32px; text-align:center;">
+                      <p style="margin:0 0 6px; font-family:'Manrope', Arial, sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:%s; font-weight:600;">%s</p>
+                      <h1 style="margin:0; font-family:'Fraunces', Georgia, serif; font-size:28px; line-height:1.2; font-weight:700; color:%s; letter-spacing:0.5px;">Ladies Apparel</h1>
                     </td>
                   </tr>
+
+                  <!-- Subheader Title Bar -->
+                  <tr>
+                    <td style="padding:28px 32px 0;">
+                      <h2 style="margin:0; font-family:'Fraunces', Georgia, serif; font-size:22px; line-height:1.3; font-weight:700; color:%s;">%s</h2>
+                      <div style="width:36px; height:2px; background-color:%s; margin-top:8px; border-radius:2px;"></div>
+                    </td>
+                  </tr>
+
+                  <!-- Dynamic Body Content -->
+                  <tr>
+                    <td style="padding:24px 32px 32px; font-size:15px; line-height:1.6; color:%s;">
+                      %s
+                    </td>
+                  </tr>
+
+                  <!-- Trust Footer Elements -->
+                  <tr>
+                    <td style="padding:24px 32px; background-color:%s; border-top:1px solid rgba(43,36,32,0.05); text-align:center;">
+                      <p style="margin:0 0 8px; font-size:12px; font-weight:600; color:%s; letter-spacing:0.5px;">LADIES APPAREL &middot; JAIPUR, INDIA</p>
+                      <p style="margin:0; font-size:11px; color:#8C827A; line-height:1.5;">
+                        &copy; 2026 Ladies Apparel. All rights reserved.<br>
+                        This is an automated operational notification. Please do not reply directly to this email.
+                      </p>
+                    </td>
+                  </tr>
+
                 </table>
-                <p style="margin:0; color:#777;">We'll email you again the moment it ships. You can also track it anytime from the Orders section of your account.</p>
-                """.formatted(BLUSH, WINE, INK, escape(orderNumber), WINE, INK, escape(totalAmount));
 
-        send(toEmail, "Order Confirmed - " + orderNumber, wrap("Order Confirmed", body));
-    }
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+        """
+        .formatted(
+            IVORY, INK, IVORY, RADIUS_PETAL,
+            WINE, BLUSH, escape(eyebrow), IVORY,
+            INK, escape(heading), WINE,
+            INK, bodyHtml,
+            IVORY, INK);
+  }
 
-    @Async
-    public void sendOrderStatusUpdateEmail(String toEmail, String orderNumber, String newStatus) {
-        String body = """
-                <p style="margin:0 0 16px;">Hi,</p>
-                <p style="margin:0 0 24px;">There's an update on your order <strong>%s</strong>:</p>
-                <div style="text-align:center; margin: 28px 0;">
-                  <span style="display:inline-block; font-size:14px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
-                               color:%s; background:%s; padding:10px 22px; border-radius:999px;">
-                    %s
-                  </span>
-                </div>
-                <p style="margin:0; color:#777;">You can track full order details anytime from the Orders section of your account.</p>
-                """.formatted(escape(orderNumber), WINE, BLUSH, escape(newStatus));
-
-        send(toEmail, "Update on your order " + orderNumber, wrap("Order Update", body));
-    }
-
-    private void send(String toEmail, String subject, String htmlBody) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
-            helper.setFrom(fromEmail);
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true);
-            mailSender.send(message);
-        } catch (Exception e) {
-            log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
-        }
-    }
-
-    /** Shared branded wrapper (header + footer) so every email looks consistent, matching the storefront's palette. */
-    private String wrap(String heading, String bodyHtml) {
-        return """
-                <!DOCTYPE html>
-                <html>
-                <body style="margin:0; padding:0; background:#F5F5F3; font-family:Helvetica,Arial,sans-serif; color:%s;">
-                  <table role="presentation" style="width:100%%; border-collapse:collapse;">
-                    <tr>
-                      <td align="center" style="padding:32px 16px;">
-                        <table role="presentation" style="width:100%%; max-width:480px; background:%s; border-radius:16px; overflow:hidden;">
-                          <tr>
-                            <td style="background:%s; padding:28px 32px;">
-                              <p style="margin:0; font-family:Georgia,serif; font-size:22px; color:%s; letter-spacing:0.5px;">Ladies Apparel</p>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td style="padding:32px;">
-                              <h1 style="margin:0 0 20px; font-family:Georgia,serif; font-size:22px; color:%s;">%s</h1>
-                              <div style="font-size:15px; line-height:1.6;">%s</div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td style="padding:20px 32px; background:#F5F5F3; text-align:center;">
-                              <p style="margin:0; font-size:12px; color:#999;">&copy; 2026 Ladies Apparel &middot; This is an automated message, please don't reply directly.</p>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                  </table>
-                </body>
-                </html>
-                """.formatted(INK, IVORY, WINE, IVORY, INK, escape(heading), bodyHtml);
-    }
-
-    /** Minimal HTML-escaping for values interpolated into the templates above (defense against header/content injection). */
-    private String escape(String value) {
-        if (value == null) return "";
-        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-    }
+  private String escape(String value) {
+    if (value == null)
+      return "";
+    return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+  }
 }

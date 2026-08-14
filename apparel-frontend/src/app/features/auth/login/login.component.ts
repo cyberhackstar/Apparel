@@ -13,16 +13,14 @@ import { GoogleSignInButtonComponent } from '../../../shared/components/google-s
   templateUrl: './login.component.html',
 })
 export class LoginComponent implements OnInit {
-  // Dependency Injection via inject()
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  // State Signals
   readonly loading = signal(false);
 
-  // Strongly-typed non-nullable reactive form with proper validation
+  // Form group definition with trimmed validations
   readonly form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
@@ -33,7 +31,7 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Auto-fill email if passed in query parameters (e.g. redirected from register/OTP page)
+    // Autofill email if passed via query params (e.g., from registration or verification redirect)
     const email = this.route.snapshot.queryParamMap.get('email');
     if (email) {
       this.form.patchValue({ email });
@@ -47,24 +45,28 @@ export class LoginComponent implements OnInit {
     }
 
     this.loading.set(true);
-
     const credentials = this.form.getRawValue();
 
     this.authService
       .login(credentials)
       .pipe(
         finalize(() => this.loading.set(false)),
-        catchError(() => EMPTY), // Interceptors or global handlers deal with HTTP error notifications
+        catchError(() => EMPTY),
       )
       .subscribe((res) => {
         const userRole = res.data?.role;
-        const redirectTo = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' ? '/admin' : '/';
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
+        if (returnUrl) {
+          this.router.navigateByUrl(returnUrl);
+          return;
+        }
+
+        const redirectTo = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' ? '/admin' : '/';
         this.router.navigate([redirectTo]);
       });
   }
 
-  // Helper method for clean, reusable validation messages in template
   getErrorMessage(controlName: keyof typeof this.form.controls): string {
     const control = this.form.controls[controlName];
 

@@ -1,42 +1,98 @@
-<div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-  <h1 class="font-display text-3xl mb-8">Your Wishlist</h1>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6">
+  <!-- Page Title & Header -->
+  <div>
+    <h1 class="font-display text-2xl sm:text-3xl text-ink">Your Wishlist</h1>
+    <p class="font-body text-xs sm:text-sm text-ink/50 mt-1">
+      {{ wishlistService.items().length }}
+      {{ wishlistService.items().length === 1 ? 'item' : 'items' }} saved for later
+    </p>
+  </div>
 
   @if (wishlistService.items().length === 0) {
-    <div class="text-center py-24">
-      <p class="font-display text-2xl mb-2">Your wishlist is empty</p>
-      <p class="font-body text-ink/50 mb-6">Save items you love for later.</p>
-      <a routerLink="/products" class="btn-primary inline-flex">Explore Products</a>
+    <!-- Empty State -->
+    <div class="card text-center py-16 sm:py-24 px-4 space-y-3 bg-white">
+      <p class="font-display text-xl sm:text-2xl text-ink">Your wishlist is empty</p>
+      <p class="font-body text-xs sm:text-sm text-ink/50 max-w-sm mx-auto">
+        Save items you love while browsing to easily find and purchase them later.
+      </p>
+      <div class="pt-2">
+        <a routerLink="/products" class="btn-primary inline-flex !py-2.5 !px-6 text-xs sm:text-sm">
+          Explore Products
+        </a>
+      </div>
     </div>
   } @else {
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-10">
+    <!-- Wishlist Grid -->
+    <div
+      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 sm:gap-x-5 gap-y-8 sm:gap-y-10"
+    >
       @for (item of wishlistService.items(); track item.productId) {
-        <div class="group">
-          <a [routerLink]="['/products', item.slug]" class="block relative rounded-petal overflow-hidden bg-blush aspect-[4/5] mb-3">
-            <img
-              [src]="item.imageUrl || 'https://placehold.co/400x500/F1DDE0/7A2E38?text=Ladies+Apparel'"
-              [alt]="item.name"
-              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            @if (!item.inStock) {
-              <span class="absolute inset-0 bg-ink/40 flex items-center justify-center text-ivory font-body font-semibold text-sm">
-                Out of Stock
+        <div class="group flex flex-col justify-between">
+          <div>
+            <!-- Product Thumbnail & Stock Overlay -->
+            <a
+              [routerLink]="['/products', item.slug]"
+              class="block relative rounded-petal overflow-hidden bg-blush aspect-[4/5] mb-3 shadow-sm"
+            >
+              <img
+                [src]="
+                  item.imageUrl || 'https://placehold.co/400x500/F1DDE0/7A2E38?text=Ladies+Apparel'
+                "
+                [alt]="item.name"
+                loading="lazy"
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              @if (!item.inStock) {
+                <span
+                  class="absolute inset-0 bg-ink/50 backdrop-blur-[2px] flex items-center justify-center text-ivory font-body font-semibold text-xs sm:text-sm tracking-wide"
+                >
+                  Out of Stock
+                </span>
+              }
+            </a>
+
+            <!-- Product Title -->
+            <a [routerLink]="['/products', item.slug]" class="block">
+              <h3
+                class="font-display text-sm sm:text-base leading-snug mb-1 text-ink group-hover:text-wine transition-colors line-clamp-2"
+              >
+                {{ item.name }}
+              </h3>
+            </a>
+
+            <!-- Price Breakdown -->
+            <div class="flex items-baseline gap-2 mb-3">
+              <span class="font-display text-sm sm:text-base font-semibold text-ink">
+                ₹{{ item.basePrice | number: '1.0-0' }}
               </span>
-            }
-          </a>
-          <a [routerLink]="['/products', item.slug]">
-            <h3 class="font-display text-lg leading-snug mb-1 hover:text-wine transition-colors">{{ item.name }}</h3>
-          </a>
-          <div class="flex items-baseline gap-2 mb-3">
-            <span class="font-display">₹{{ item.basePrice | number: '1.0-0' }}</span>
-            @if (item.mrp > item.basePrice) {
-              <span class="font-body text-sm text-ink/40 line-through">₹{{ item.mrp | number: '1.0-0' }}</span>
-            }
+              @if (item.mrp > item.basePrice) {
+                <span class="font-body text-xs text-ink/40 line-through">
+                  ₹{{ item.mrp | number: '1.0-0' }}
+                </span>
+              }
+            </div>
           </div>
-          <div class="flex gap-2">
-            <a [routerLink]="['/products', item.slug]" class="btn-secondary flex-1 !py-2 text-sm text-center">Select Options</a>
-            <button (click)="remove(item.productId)" class="w-9 h-9 rounded-petal-sm border border-ink/20 flex items-center justify-center shrink-0" aria-label="Remove">
-              <svg width="16" height="16" viewBox="0 0 24 24" class="fill-none stroke-ink stroke-2">
-                <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
+
+          <!-- Card Actions (Select Options + Remove) -->
+          <div class="flex items-center gap-2 pt-1">
+            <a
+              [routerLink]="['/products', item.slug]"
+              class="btn-secondary flex-1 !py-2 sm:!py-2.5 text-center text-xs font-semibold truncate"
+            >
+              Select Options
+            </a>
+            <button
+              (click)="remove(item.productId)"
+              class="w-8 h-8 sm:w-9 sm:h-9 rounded-petal-sm border border-ink/20 flex items-center justify-center shrink-0 hover:bg-blush hover:text-wine hover:border-wine/30 transition-colors"
+              aria-label="Remove from wishlist"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                class="fill-none stroke-current stroke-2"
+              >
+                <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" />
               </svg>
             </button>
           </div>

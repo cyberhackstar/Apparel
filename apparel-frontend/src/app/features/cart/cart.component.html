@@ -1,56 +1,113 @@
-<div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-  <h1 class="font-display text-3xl mb-8">Your Cart</h1>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6">
+  <h1 class="font-display text-2xl sm:text-3xl text-ink">Your Cart</h1>
 
   @if (cartService.cart().items.length === 0) {
-    <div class="text-center py-24">
-      <p class="font-display text-2xl mb-2">Your cart is empty</p>
-      <p class="font-body text-ink/50 mb-6">Looks like you haven't added anything yet.</p>
-      <a routerLink="/products" class="btn-primary inline-flex">Start Shopping</a>
+    <div class="card text-center py-16 sm:py-24 px-4 space-y-3">
+      <p class="font-display text-xl sm:text-2xl text-ink">Your cart is empty</p>
+      <p class="font-body text-xs sm:text-sm text-ink/50">
+        Looks like you haven't added anything to your cart yet.
+      </p>
+      <div class="pt-2">
+        <a routerLink="/products" class="btn-primary inline-flex !py-2.5 !px-6 text-xs sm:text-sm">
+          Start Shopping
+        </a>
+      </div>
     </div>
   } @else {
-    <div class="grid lg:grid-cols-3 gap-10">
-      <!-- Items -->
-      <div class="lg:col-span-2 space-y-5">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 items-start">
+      <!-- Items Section -->
+      <div class="lg:col-span-2 space-y-4">
         @if (cartService.cart().hasOutOfStockItems) {
-          <div class="bg-blush text-wine font-body text-sm rounded-petal-sm px-4 py-3">
-            Some items in your cart are out of stock or have limited quantity. Please review before checkout.
+          <div
+            class="bg-blush text-wine font-body text-xs sm:text-sm rounded-petal-sm px-4 py-3 border border-wine/10 leading-relaxed"
+          >
+            ⚠️ Some items in your cart are out of stock or have limited quantity. Please review
+            before proceeding.
           </div>
         }
 
         @for (item of cartService.cart().items; track item.cartItemId) {
-          <div class="card p-4 flex gap-4">
+          <div class="card p-3 sm:p-4 flex gap-3 sm:gap-4">
+            <!-- Product Thumbnail -->
             <img
               [src]="item.imageUrl || 'https://placehold.co/150x180/F1DDE0/7A2E38?text=Item'"
               [alt]="item.productName"
-              class="w-24 h-28 object-cover rounded-petal-sm shrink-0"
+              class="w-20 h-24 sm:w-24 sm:h-28 object-cover rounded-petal-sm shrink-0 border border-ink/5"
             />
-            <div class="flex-1 min-w-0">
-              <div class="flex justify-between gap-2">
-                <div>
-                  <p class="font-display text-lg truncate">{{ item.productName }}</p>
-                  <p class="font-body text-sm text-ink/50">{{ item.size }} / {{ item.color }}</p>
+
+            <!-- Item Info & Controls -->
+            <div class="flex-1 min-w-0 flex flex-col justify-between">
+              <div>
+                <div class="flex justify-between items-start gap-2">
+                  <div class="min-w-0">
+                    <p class="font-display text-base sm:text-lg text-ink truncate leading-tight">
+                      {{ item.productName }}
+                    </p>
+                    <p class="font-body text-xs sm:text-sm text-ink/50 mt-0.5">
+                      {{ item.size }} / {{ item.color }}
+                    </p>
+                  </div>
+
+                  <!-- Remove Button -->
+                  <button
+                    (click)="removeItem(item.cartItemId)"
+                    class="p-1 -mr-1 text-ink/40 hover:text-wine transition-colors shrink-0"
+                    aria-label="Remove item"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      class="fill-none stroke-current stroke-2"
+                    >
+                      <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" />
+                    </svg>
+                  </button>
                 </div>
-                <button (click)="removeItem(item.cartItemId)" class="text-ink/40 hover:text-wine shrink-0" aria-label="Remove">
-                  <svg width="18" height="18" viewBox="0 0 24 24" class="fill-none stroke-current stroke-2">
-                    <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
-                  </svg>
-                </button>
+
+                @if (!item.inStock) {
+                  <p class="text-[11px] sm:text-xs font-body font-medium text-wine mt-1">
+                    Insufficient stock — please adjust quantity
+                  </p>
+                }
               </div>
 
-              @if (!item.inStock) {
-                <p class="text-xs font-body text-wine mt-1">Insufficient stock — update quantity</p>
-              }
-
-              <div class="flex items-center justify-between mt-3">
-                <div class="flex items-center border border-ink/20 rounded-petal-sm">
-                  <button (click)="updateQuantity(item.cartItemId, item.quantity - 1)" class="w-8 h-8 font-body">&minus;</button>
-                  <span class="w-8 text-center font-body text-sm">{{ item.quantity }}</span>
-                  <button (click)="updateQuantity(item.cartItemId, item.quantity + 1)" class="w-8 h-8 font-body">+</button>
+              <!-- Quantity Selector & Price -->
+              <div class="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-ink/5">
+                <!-- Counter -->
+                <div
+                  class="flex items-center border border-ink/20 rounded-petal-sm bg-white overflow-hidden"
+                >
+                  <button
+                    (click)="updateQuantity(item.cartItemId, item.quantity - 1)"
+                    class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-body text-ink/70 hover:bg-ink/5 text-sm"
+                    aria-label="Decrease quantity"
+                  >
+                    &minus;
+                  </button>
+                  <span
+                    class="w-7 sm:w-8 text-center font-body text-xs sm:text-sm font-semibold text-ink"
+                  >
+                    {{ item.quantity }}
+                  </span>
+                  <button
+                    (click)="updateQuantity(item.cartItemId, item.quantity + 1)"
+                    class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-body text-ink/70 hover:bg-ink/5 text-sm"
+                    aria-label="Increase quantity"
+                  >
+                    +
+                  </button>
                 </div>
+
+                <!-- Price Breakdown -->
                 <div class="text-right">
-                  <p class="font-display">₹{{ item.lineTotal | number: '1.0-0' }}</p>
+                  <p class="font-display text-base sm:text-lg text-ink font-semibold">
+                    ₹{{ item.lineTotal | number: '1.0-0' }}
+                  </p>
                   @if (item.mrp > item.unitPrice) {
-                    <p class="text-xs text-ink/40 line-through">₹{{ item.mrp * item.quantity | number: '1.0-0' }}</p>
+                    <p class="text-[10px] sm:text-xs text-ink/40 line-through">
+                      ₹{{ item.mrp * item.quantity | number: '1.0-0' }}
+                    </p>
                   }
                 </div>
               </div>
@@ -59,30 +116,45 @@
         }
       </div>
 
-      <!-- Summary -->
-      <div class="card p-6 h-fit sticky top-24">
-        <h2 class="font-display text-xl mb-4">Order Summary</h2>
+      <!-- Order Summary Card -->
+      <div class="card p-4 sm:p-6 h-fit lg:sticky lg:top-24 space-y-4">
+        <h2 class="font-display text-lg sm:text-xl text-ink">Order Summary</h2>
 
-        <div class="mb-4">
-          <div class="flex gap-2">
-            <input type="text" [(ngModel)]="couponCode" placeholder="Coupon code" class="input-field !py-2 text-sm flex-1" />
-            <button (click)="applyCoupon()" [disabled]="applyingCoupon()" class="btn-secondary !px-4 !py-2 text-sm">
-              Apply
-            </button>
-          </div>
+        <!-- Coupon Input -->
+        <div class="flex gap-2">
+          <input
+            type="text"
+            [(ngModel)]="couponCode"
+            placeholder="Coupon code"
+            class="input-field !py-2 text-xs sm:text-sm flex-1 uppercase"
+          />
+          <button
+            (click)="applyCoupon()"
+            [disabled]="applyingCoupon() || !couponCode"
+            class="btn-secondary !px-4 !py-2 text-xs sm:text-sm shrink-0"
+          >
+            {{ applyingCoupon() ? 'Applying…' : 'Apply' }}
+          </button>
         </div>
 
-        <div class="space-y-2 font-body text-sm border-t border-ink/10 pt-4">
+        <!-- Price Details Breakdown -->
+        <div
+          class="space-y-2.5 font-body text-xs sm:text-sm border-t border-ink/10 pt-4 text-ink/80"
+        >
           <div class="flex justify-between">
             <span class="text-ink/60">Subtotal ({{ cartService.cart().totalItems }} items)</span>
-            <span>₹{{ cartService.cart().subtotal | number: '1.0-0' }}</span>
+            <span class="font-medium text-ink"
+              >₹{{ cartService.cart().subtotal | number: '1.0-0' }}</span
+            >
           </div>
+
           @if (cartService.cart().totalDiscount > 0) {
             <div class="flex justify-between text-wine">
               <span>Product Discount</span>
               <span>&minus;₹{{ cartService.cart().totalDiscount | number: '1.0-0' }}</span>
             </div>
           }
+
           @if (appliedDiscount()) {
             <div class="flex justify-between text-wine">
               <span>Coupon ({{ couponCode }})</span>
@@ -91,13 +163,27 @@
           }
         </div>
 
-        <div class="flex justify-between font-display text-lg border-t border-ink/10 mt-4 pt-4">
-          <span>Total</span>
-          <span>₹{{ (cartService.cart().subtotal - (appliedDiscount() || 0)) | number: '1.0-0' }}</span>
+        <!-- Grand Total -->
+        <div class="border-t border-ink/10 pt-4 space-y-1">
+          <div class="flex justify-between font-display text-lg sm:text-xl text-ink font-semibold">
+            <span>Total</span>
+            <span class="text-wine">
+              ₹{{ cartService.cart().subtotal - (appliedDiscount() || 0) | number: '1.0-0' }}
+            </span>
+          </div>
+          <p class="font-body text-[11px] sm:text-xs text-ink/40">
+            Shipping &amp; taxes calculated at checkout
+          </p>
         </div>
-        <p class="font-body text-xs text-ink/40 mt-1">Shipping &amp; taxes calculated at checkout</p>
 
-        <button class="btn-primary w-full mt-6" (click)="proceedToCheckout()">Proceed to Checkout</button>
+        <!-- Checkout Action Button -->
+        <button
+          class="btn-primary w-full !py-3 text-xs sm:text-sm font-semibold tracking-wide"
+          (click)="proceedToCheckout()"
+          [disabled]="cartService.cart().hasOutOfStockItems"
+        >
+          Proceed to Checkout
+        </button>
       </div>
     </div>
   }

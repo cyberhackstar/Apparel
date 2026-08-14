@@ -1,147 +1,263 @@
 @if (loading()) {
-  <div class="max-w-4xl mx-auto px-6 py-10">
-    <p class="font-body text-ink/50">Loading order…</p>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+    <p class="font-body text-sm text-ink/50 text-center sm:text-left">Loading order…</p>
   </div>
 } @else if (order(); as o) {
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
-    <a routerLink="/orders" class="font-body text-sm text-ink/50 hover:text-ink mb-4 inline-block">&larr; Back to orders</a>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6">
+    <!-- Back link -->
+    <a
+      routerLink="/orders"
+      class="font-body text-xs sm:text-sm text-ink/50 hover:text-ink inline-block"
+    >
+      &larr; Back to orders
+    </a>
 
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-8">
-      <div>
-        <h1 class="font-display text-2xl">{{ o.orderNumber }}</h1>
-        <p class="font-body text-sm text-ink/50">Placed on {{ o.createdAt | date: 'MMM d, y, h:mm a' }}</p>
+    <!-- Order Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
+      <div class="space-y-0.5">
+        <h1 class="font-display text-2xl sm:text-3xl text-ink font-mono">#{{ o.orderNumber }}</h1>
+        <p class="font-body text-xs sm:text-sm text-ink/50">
+          Placed on {{ o.createdAt | date: 'MMM d, y, h:mm a' }}
+        </p>
       </div>
-      <span class="text-xs font-body font-semibold px-3 py-1.5 rounded-petal-sm bg-blush text-wine">{{ o.status }}</span>
+      <span
+        class="text-xs font-body font-semibold px-3 py-1 rounded-petal-sm bg-blush text-wine self-start sm:self-auto uppercase tracking-wider"
+      >
+        {{ o.status }}
+      </span>
     </div>
 
+    <!-- Tracking Stepper -->
     @if (o.status !== 'CANCELLED' && o.status !== 'RETURNED') {
-      <!-- Tracking progress -->
-      <div class="card p-6 mb-8">
+      <div class="card p-4 sm:p-6">
         <div class="flex justify-between relative">
-          <div class="absolute top-3 left-0 right-0 h-0.5 bg-ink/10"></div>
+          <!-- Background Track -->
+          <div class="absolute top-2.5 sm:top-3 left-0 right-0 h-0.5 bg-ink/10"></div>
+          <!-- Completed Fill Track -->
           <div
-            class="absolute top-3 left-0 h-0.5 bg-wine transition-all"
+            class="absolute top-2.5 sm:top-3 left-0 h-0.5 bg-wine transition-all duration-300"
             [style.width.%]="(currentStepIndex() / (trackingSteps.length - 1)) * 100"
           ></div>
+
           @for (step of trackingSteps; track step; let i = $index) {
-            <div class="relative flex flex-col items-center gap-2 z-10" style="flex: 1">
+            <div class="relative flex flex-col items-center gap-1.5 sm:gap-2 z-10 flex-1 min-w-0">
               <div
-                class="w-6 h-6 rounded-full flex items-center justify-center"
-                [class]="i <= currentStepIndex() ? 'bg-wine' : 'bg-ivory border-2 border-ink/20'"
-              ></div>
-              <span class="font-body text-[10px] text-center text-ink/60 max-w-[70px]">{{ step.replace('_', ' ') }}</span>
+                class="w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-colors"
+                [class]="
+                  i <= currentStepIndex()
+                    ? 'bg-wine ring-4 ring-ivory'
+                    : 'bg-ivory border-2 border-ink/20'
+                "
+              >
+                @if (i <= currentStepIndex()) {
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    class="fill-none stroke-ivory stroke-[3]"
+                  >
+                    <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                }
+              </div>
+              <span
+                class="font-body text-[9px] sm:text-[10px] text-center text-ink/60 max-w-[65px] sm:max-w-[75px] truncate sm:whitespace-normal leading-tight"
+              >
+                {{ step.replace('_', ' ') }}
+              </span>
             </div>
           }
         </div>
       </div>
     }
 
+    <!-- Payment Pending Banner -->
     @if (needsPayment) {
-      <div class="card p-5 mb-8 bg-blush/40 flex items-center justify-between flex-wrap gap-3">
+      <div
+        class="card p-4 sm:p-5 bg-blush/40 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border border-wine/10"
+      >
         <div>
-          <p class="font-body font-semibold text-sm">Payment pending</p>
+          <p class="font-body font-semibold text-xs sm:text-sm text-wine">Payment pending</p>
           <p class="font-body text-xs text-ink/60">Complete your payment to confirm this order.</p>
         </div>
-        <button class="btn-primary !py-2 text-sm" [disabled]="retryingPayment()" (click)="retryPayment()">
+        <button
+          class="btn-primary !py-2 text-xs sm:text-sm text-center shrink-0"
+          [disabled]="retryingPayment()"
+          (click)="retryPayment()"
+        >
           {{ retryingPayment() ? 'Processing…' : 'Complete Payment' }}
         </button>
       </div>
     }
 
-    <!-- Items -->
-    <div class="card p-6 mb-6">
-      <h2 class="font-display text-lg mb-4">Items</h2>
-      <div class="space-y-4">
+    <!-- Ordered Items Card -->
+    <div class="card p-4 sm:p-6 space-y-4">
+      <h2 class="font-display text-base sm:text-lg text-ink">Items</h2>
+      <div class="divide-y divide-ink/5">
         @for (item of o.items; track item.sku) {
-          <div class="flex gap-4">
-            <img [src]="item.imageUrl || 'https://placehold.co/100x120/F1DDE0/7A2E38?text=Item'" class="w-16 h-20 object-cover rounded-petal-sm" />
-            <div class="flex-1">
-              <p class="font-body font-semibold text-sm">{{ item.productName }}</p>
-              <p class="font-body text-xs text-ink/50">{{ item.size }} / {{ item.color }} · Qty {{ item.quantity }}</p>
+          <div class="py-3 first:pt-0 last:pb-0 flex items-center gap-3 sm:gap-4">
+            <img
+              [src]="item.imageUrl || 'https://placehold.co/100x120/F1DDE0/7A2E38?text=Item'"
+              class="w-14 h-16 sm:w-16 sm:h-20 object-cover rounded-petal-sm border border-ink/5 shrink-0"
+            />
+            <div class="flex-1 min-w-0">
+              <p class="font-body font-semibold text-xs sm:text-sm text-ink truncate">
+                {{ item.productName }}
+              </p>
+              <p class="font-body text-xs text-ink/50 mt-0.5">
+                {{ item.size }} / {{ item.color }} · Qty {{ item.quantity }}
+              </p>
             </div>
-            <p class="font-body text-sm">₹{{ item.lineTotal | number: '1.0-0' }}</p>
+            <p class="font-display font-semibold text-xs sm:text-sm text-ink shrink-0">
+              ₹{{ item.lineTotal | number: '1.0-0' }}
+            </p>
           </div>
         }
       </div>
     </div>
 
-    <div class="grid sm:grid-cols-2 gap-6">
-      <!-- Delivery address -->
-      <div class="card p-6">
-        <h2 class="font-display text-lg mb-3">Delivery Address</h2>
-        <p class="font-body text-sm font-semibold">{{ o.recipientName }}</p>
-        <p class="font-body text-sm text-ink/70">
-          {{ o.addressLine1 }}, {{ o.addressLine2 }}
-          @if (o.landmark) { , {{ o.landmark }} }
-          <br />{{ o.city }}, {{ o.state }} - {{ o.pincode }}
-        </p>
-        <p class="font-body text-sm text-ink/50 mt-1">Phone: {{ o.recipientPhone }}</p>
+    <!-- Address & Payment Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+      <!-- Delivery Address -->
+      <div class="card p-4 sm:p-6 space-y-2">
+        <h2 class="font-display text-base sm:text-lg text-ink">Delivery Address</h2>
+        <div class="font-body text-xs sm:text-sm space-y-0.5">
+          <p class="font-semibold text-ink">{{ o.recipientName }}</p>
+          <p class="text-ink/70 leading-relaxed">
+            {{ o.addressLine1 }}{{ o.addressLine2 ? ', ' + o.addressLine2 : '' }}
+            @if (o.landmark) {
+              , {{ o.landmark }}
+            }
+            <br />{{ o.city }}, {{ o.state }} - {{ o.pincode }}
+          </p>
+          <p class="text-ink/50 pt-1">📞 {{ o.recipientPhone }}</p>
+        </div>
       </div>
 
-      <!-- Price breakdown -->
-      <div class="card p-6">
-        <h2 class="font-display text-lg mb-3">Payment Summary</h2>
-        <div class="space-y-2 font-body text-sm">
-          <div class="flex justify-between"><span class="text-ink/60">Subtotal</span><span>₹{{ o.subtotal | number: '1.0-0' }}</span></div>
+      <!-- Payment Summary -->
+      <div class="card p-4 sm:p-6 space-y-3">
+        <h2 class="font-display text-base sm:text-lg text-ink">Payment Summary</h2>
+        <div class="space-y-2 font-body text-xs sm:text-sm">
+          <div class="flex justify-between">
+            <span class="text-ink/60">Subtotal</span>
+            <span class="text-ink">₹{{ o.subtotal | number: '1.0-0' }}</span>
+          </div>
+
           @if (o.discountAmount > 0) {
-            <div class="flex justify-between text-wine"><span>Discount {{ o.couponCode ? '(' + o.couponCode + ')' : '' }}</span><span>&minus;₹{{ o.discountAmount | number: '1.0-0' }}</span></div>
+            <div class="flex justify-between text-wine">
+              <span>Discount {{ o.couponCode ? '(' + o.couponCode + ')' : '' }}</span>
+              <span>&minus;₹{{ o.discountAmount | number: '1.0-0' }}</span>
+            </div>
           }
-          <div class="flex justify-between"><span class="text-ink/60">Shipping</span><span>{{ o.shippingCharge === 0 ? 'FREE' : '₹' + o.shippingCharge }}</span></div>
-          <div class="flex justify-between font-display text-base border-t border-ink/10 pt-2 mt-2"><span>Total</span><span>₹{{ o.grandTotal | number: '1.0-0' }}</span></div>
+
+          <div class="flex justify-between">
+            <span class="text-ink/60">Shipping</span>
+            <span class="text-ink">{{
+              o.shippingCharge === 0 ? 'FREE' : '₹' + o.shippingCharge
+            }}</span>
+          </div>
+
+          <div
+            class="flex justify-between font-display text-base sm:text-lg text-ink border-t border-ink/10 pt-2 font-semibold"
+          >
+            <span>Total</span>
+            <span class="text-wine">₹{{ o.grandTotal | number: '1.0-0' }}</span>
+          </div>
         </div>
-        <p class="font-body text-xs text-ink/50 mt-3">
-          {{ o.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Paid Online' }} · {{ o.paymentStatus }}
+
+        <p class="font-body text-xs text-ink/50 pt-1 border-t border-ink/5">
+          {{ o.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Paid Online' }} ·
+          <span class="font-medium text-ink">{{ o.paymentStatus }}</span>
         </p>
       </div>
     </div>
 
-    @if (isCancellable) {
-      <button class="btn-secondary mt-8" [disabled]="cancelling()" (click)="cancelOrder()">
-        {{ cancelling() ? 'Cancelling…' : 'Cancel Order' }}
-      </button>
-    }
+    <!-- Actions Section -->
+    <div class="space-y-4 pt-2">
+      <div class="flex flex-col sm:flex-row flex-wrap gap-3">
+        <button
+          class="btn-secondary w-full sm:w-auto !py-2.5 text-xs sm:text-sm text-center"
+          [disabled]="downloadingInvoice()"
+          (click)="downloadInvoice()"
+        >
+          {{ downloadingInvoice() ? 'Downloading…' : 'Download Invoice (PDF)' }}
+        </button>
 
-    <div class="flex flex-wrap gap-3 mt-8">
-      <button class="btn-secondary" [disabled]="downloadingInvoice()" (click)="downloadInvoice()">
-        {{ downloadingInvoice() ? 'Downloading…' : 'Download Invoice (PDF)' }}
-      </button>
+        @if (isReturnEligible && !showReturnForm()) {
+          <button
+            class="btn-secondary w-full sm:w-auto !py-2.5 text-xs sm:text-sm text-center"
+            (click)="showReturnForm.set(true)"
+          >
+            Request Return / Exchange
+          </button>
+        }
 
-      @if (isReturnEligible && !showReturnForm()) {
-        <button class="btn-secondary" (click)="showReturnForm.set(true)">Request Return / Exchange</button>
+        @if (isCancellable) {
+          <button
+            class="btn-secondary w-full sm:w-auto !py-2.5 text-xs sm:text-sm text-center text-wine border-wine/30 hover:bg-wine/5"
+            [disabled]="cancelling()"
+            (click)="cancelOrder()"
+          >
+            {{ cancelling() ? 'Cancelling…' : 'Cancel Order' }}
+          </button>
+        }
+      </div>
+
+      <!-- Return Request Form -->
+      @if (showReturnForm()) {
+        <div class="card p-4 sm:p-6 space-y-3 border border-wine/20">
+          <h3 class="font-display text-base sm:text-lg text-ink">Request Return / Exchange</h3>
+          <textarea
+            [(ngModel)]="returnReason"
+            rows="3"
+            placeholder="Tell us why you'd like to return or exchange this order…"
+            class="input-field text-xs sm:text-sm"
+          ></textarea>
+          <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
+            <button
+              class="btn-primary w-full sm:w-auto !py-2 text-xs sm:text-sm text-center"
+              [disabled]="submittingReturn() || !returnReason.trim()"
+              (click)="submitReturnRequest()"
+            >
+              {{ submittingReturn() ? 'Submitting…' : 'Submit Request' }}
+            </button>
+            <button
+              class="btn-secondary w-full sm:w-auto !py-2 text-xs sm:text-sm text-center"
+              (click)="showReturnForm.set(false)"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Existing Return Status Card -->
+      @if (existingReturn(); as ret) {
+        <div class="card p-4 sm:p-5 bg-blush/30 space-y-2 border border-wine/10">
+          <h3 class="font-display text-base sm:text-lg text-ink">Return / Exchange Status</h3>
+          <p class="font-body text-xs sm:text-sm">
+            <span class="font-semibold text-ink">Status:</span>
+            <span
+              class="text-[10px] sm:text-xs font-body font-semibold px-2 py-0.5 rounded-petal-sm bg-blush text-wine ml-1 uppercase"
+            >
+              {{ ret.status }}
+            </span>
+          </p>
+          <p class="font-body text-xs sm:text-sm text-ink/70">
+            <strong class="font-medium text-ink">Reason:</strong> {{ ret.reason }}
+          </p>
+          @if (ret.adminNotes) {
+            <p class="font-body text-xs sm:text-sm text-ink/70">
+              <strong class="font-medium text-ink">Admin Note:</strong> {{ ret.adminNotes }}
+            </p>
+          }
+          @if (ret.refundAmount) {
+            <p class="font-body text-xs sm:text-sm text-wine font-semibold pt-1">
+              Refund Amount: ₹{{ ret.refundAmount | number: '1.0-0' }}
+            </p>
+          }
+        </div>
       }
     </div>
-
-    @if (showReturnForm()) {
-      <div class="card p-5 mt-4">
-        <h3 class="font-display text-lg mb-3">Request Return / Exchange</h3>
-        <textarea
-          [(ngModel)]="returnReason" rows="3" placeholder="Tell us why you'd like to return or exchange this order…"
-          class="input-field mb-3"
-        ></textarea>
-        <div class="flex gap-3">
-          <button class="btn-primary" [disabled]="submittingReturn()" (click)="submitReturnRequest()">
-            {{ submittingReturn() ? 'Submitting…' : 'Submit Request' }}
-          </button>
-          <button class="btn-secondary" (click)="showReturnForm.set(false)">Cancel</button>
-        </div>
-      </div>
-    }
-
-    @if (existingReturn(); as ret) {
-      <div class="card p-5 mt-4 bg-blush/30">
-        <h3 class="font-display text-lg mb-2">Return / Exchange Status</h3>
-        <p class="font-body text-sm mb-1">
-          <span class="font-semibold">Status:</span>
-          <span class="text-xs font-body font-semibold px-2 py-1 rounded-petal-sm bg-blush text-wine ml-1">{{ ret.status }}</span>
-        </p>
-        <p class="font-body text-sm text-ink/70 mb-1">Reason: {{ ret.reason }}</p>
-        @if (ret.adminNotes) {
-          <p class="font-body text-sm text-ink/70">Note from us: {{ ret.adminNotes }}</p>
-        }
-        @if (ret.refundAmount) {
-          <p class="font-body text-sm text-ink/70">Refund amount: ₹{{ ret.refundAmount | number: '1.0-0' }}</p>
-        }
-      </div>
-    }
   </div>
 }

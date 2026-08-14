@@ -1,118 +1,187 @@
-<div class="max-w-2xl mx-auto px-4 sm:px-6 py-10">
-  <h1 class="font-display text-3xl mb-8">My Profile</h1>
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6">
+  <div>
+    <h1 class="font-display text-2xl sm:text-3xl text-ink">My Profile</h1>
+    <p class="font-body text-xs sm:text-sm text-ink/50 mt-1">
+      Manage your account information, email address, and security settings.
+    </p>
+  </div>
 
   @if (loading()) {
-    <p class="font-body text-ink/50">Loading…</p>
+    <p class="font-body text-xs sm:text-sm text-ink/50 py-8 text-center sm:text-left">
+      Loading profile details…
+    </p>
   } @else {
     <!-- Basic info -->
-    <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="card p-6 mb-6 space-y-4">
-      <h2 class="font-display text-xl mb-2">Basic Information</h2>
+    <form
+      [formGroup]="profileForm"
+      (ngSubmit)="saveProfile()"
+      class="card p-4 sm:p-6 space-y-4 bg-white"
+    >
+      <h2 class="font-display text-lg sm:text-xl text-ink">Basic Information</h2>
+
       <div>
-        <label class="font-body text-sm font-medium mb-1.5 block">Full Name</label>
-        <input type="text" formControlName="fullName" class="input-field" />
+        <label class="font-body text-xs sm:text-sm font-medium mb-1 block text-ink/70"
+          >Full Name *</label
+        >
+        <input
+          type="text"
+          formControlName="fullName"
+          class="input-field !py-2 text-xs sm:text-sm"
+        />
         @if (pf.fullName.touched && pf.fullName.invalid) {
-          <p class="input-error">Please enter your full name.</p>
+          <p class="input-error mt-1 text-xs">Please enter your full name.</p>
         }
       </div>
+
       <div>
-        <label class="font-body text-sm font-medium mb-1.5 block">Phone Number</label>
-        <input type="tel" formControlName="phone" class="input-field" />
+        <label class="font-body text-xs sm:text-sm font-medium mb-1 block text-ink/70"
+          >Phone Number *</label
+        >
+        <input
+          type="tel"
+          formControlName="phone"
+          class="input-field !py-2 text-xs sm:text-sm"
+          placeholder="10-digit mobile number"
+        />
         @if (pf.phone.touched && pf.phone.invalid) {
-          <p class="input-error">Please enter a valid 10-digit Indian mobile number.</p>
+          <p class="input-error mt-1 text-xs">
+            Please enter a valid 10-digit Indian mobile number.
+          </p>
         }
       </div>
-      <button type="submit" class="btn-primary" [disabled]="savingProfile()">
-        {{ savingProfile() ? 'Saving…' : 'Save Changes' }}
-      </button>
+
+      <div class="pt-2">
+        <button
+          type="submit"
+          class="btn-primary w-full sm:w-auto !py-2.5 !px-6 text-xs sm:text-sm text-center"
+          [disabled]="savingProfile()"
+        >
+          {{ savingProfile() ? 'Saving…' : 'Save Changes' }}
+        </button>
+      </div>
     </form>
 
     <!-- Email change -->
-    <div class="card p-6 mb-6">
-      <h2 class="font-display text-xl mb-2">Email Address</h2>
-      <p class="font-body text-sm text-ink/60 mb-4">
-        Current: <span class="font-semibold text-ink">{{ profile()?.email }}</span>
-      </p>
+    <div class="card p-4 sm:p-6 space-y-4 bg-white">
+      <div>
+        <h2 class="font-display text-lg sm:text-xl text-ink">Email Address</h2>
+        <p class="font-body text-xs sm:text-sm text-ink/60 mt-1">
+          Current: <span class="font-semibold text-ink break-all">{{ profile()?.email }}</span>
+        </p>
+      </div>
 
       <form [formGroup]="emailForm" class="space-y-3">
         @if (emailChangeStep() === 'idle') {
-          <div class="flex gap-2 items-start">
-            <div class="flex-1">
+          <div class="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-start">
+            <div class="flex-1 min-w-0">
               <input
                 type="email"
                 formControlName="newEmail"
                 placeholder="New email address"
-                class="input-field w-full"
+                class="input-field !py-2 text-xs sm:text-sm w-full"
               />
               @if (ef.newEmail.touched && ef.newEmail.invalid) {
-                <p class="input-error mt-1">Please enter a valid email address.</p>
+                <p class="input-error mt-1 text-xs">Please enter a valid email address.</p>
               }
             </div>
+
             <button
               type="button"
               (click)="requestEmailChange()"
-              class="btn-secondary"
+              class="btn-secondary w-full sm:w-auto !py-2 !px-5 text-xs sm:text-sm text-center shrink-0"
               [disabled]="requestingEmailChange()"
             >
               {{ requestingEmailChange() ? 'Sending…' : 'Change Email' }}
             </button>
           </div>
         } @else {
-          <p class="font-body text-sm text-ink/60 mb-3">
-            Enter the code sent to <span class="font-medium text-ink">{{ ef.newEmail.value }}</span
+          <p class="font-body text-xs sm:text-sm text-ink/70 leading-relaxed">
+            Enter the 6-digit verification code sent to
+            <strong class="text-ink font-medium break-all">{{ ef.newEmail.value }}</strong
             >:
           </p>
-          <div class="flex gap-2 items-start">
-            <div class="flex-1">
+
+          <div class="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-start">
+            <div class="flex-1 min-w-0">
               <input
                 type="text"
                 formControlName="emailOtp"
                 placeholder="Verification code"
-                class="input-field w-full"
+                class="input-field !py-2 text-xs sm:text-sm w-full font-mono text-center sm:text-left tracking-wider"
               />
               @if (ef.emailOtp.touched && ef.emailOtp.invalid) {
-                <p class="input-error mt-1">Please enter a valid verification code.</p>
+                <p class="input-error mt-1 text-xs">Please enter a valid verification code.</p>
               }
             </div>
+
             <button
               type="button"
               (click)="verifyEmailChange()"
-              class="btn-primary"
+              class="btn-primary w-full sm:w-auto !py-2 !px-5 text-xs sm:text-sm text-center shrink-0"
               [disabled]="verifyingEmailChange()"
             >
               {{ verifyingEmailChange() ? 'Verifying…' : 'Verify & Update' }}
             </button>
           </div>
-          <button
-            type="button"
-            (click)="resetEmailForm()"
-            class="font-body text-xs text-ink/40 hover:underline mt-2 block"
-          >
-            Cancel
-          </button>
+
+          <div class="pt-1">
+            <button
+              type="button"
+              (click)="resetEmailForm()"
+              class="font-body text-xs text-wine hover:underline inline-block"
+            >
+              Cancel change
+            </button>
+          </div>
         }
       </form>
     </div>
 
     <!-- Password change -->
-    <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="card p-6 space-y-4">
-      <h2 class="font-display text-xl mb-2">Change Password</h2>
+    <form
+      [formGroup]="passwordForm"
+      (ngSubmit)="changePassword()"
+      class="card p-4 sm:p-6 space-y-4 bg-white"
+    >
+      <h2 class="font-display text-lg sm:text-xl text-ink">Change Password</h2>
+
       <div>
-        <label class="font-body text-sm font-medium mb-1.5 block">Current Password</label>
-        <input type="password" formControlName="currentPassword" class="input-field" />
+        <label class="font-body text-xs sm:text-sm font-medium mb-1 block text-ink/70"
+          >Current Password *</label
+        >
+        <input
+          type="password"
+          formControlName="currentPassword"
+          class="input-field !py-2 text-xs sm:text-sm"
+        />
         @if (pwf.currentPassword.touched && pwf.currentPassword.invalid) {
-          <p class="input-error">Please enter your current password.</p>
+          <p class="input-error mt-1 text-xs">Please enter your current password.</p>
         }
       </div>
+
       <div>
-        <label class="font-body text-sm font-medium mb-1.5 block">New Password</label>
-        <input type="password" formControlName="newPassword" class="input-field" />
+        <label class="font-body text-xs sm:text-sm font-medium mb-1 block text-ink/70"
+          >New Password *</label
+        >
+        <input
+          type="password"
+          formControlName="newPassword"
+          class="input-field !py-2 text-xs sm:text-sm"
+        />
         @if (pwf.newPassword.touched && pwf.newPassword.invalid) {
-          <p class="input-error">Password must be at least 8 characters.</p>
+          <p class="input-error mt-1 text-xs">Password must be at least 8 characters long.</p>
         }
       </div>
-      <button type="submit" class="btn-primary" [disabled]="savingPassword()">
-        {{ savingPassword() ? 'Changing…' : 'Change Password' }}
-      </button>
+
+      <div class="pt-2">
+        <button
+          type="submit"
+          class="btn-primary w-full sm:w-auto !py-2.5 !px-6 text-xs sm:text-sm text-center"
+          [disabled]="savingPassword()"
+        >
+          {{ savingPassword() ? 'Changing…' : 'Change Password' }}
+        </button>
+      </div>
     </form>
   }
 </div>

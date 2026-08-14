@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { OrderService } from '../../../core/services/order.service';
 import { Order } from '../../../core/models/order.model';
@@ -11,12 +11,12 @@ import { Order } from '../../../core/models/order.model';
   templateUrl: './order-list.component.html',
 })
 export class OrderListComponent implements OnInit {
-  orders = signal<Order[]>([]);
-  loading = signal(true);
-  page = signal(0);
-  totalPages = signal(0);
+  private readonly orderService = inject(OrderService);
 
-  constructor(private orderService: OrderService) {}
+  readonly orders = signal<Order[]>([]);
+  readonly loading = signal(true);
+  readonly page = signal(0);
+  readonly totalPages = signal(0);
 
   ngOnInit(): void {
     this.fetch();
@@ -38,14 +38,28 @@ export class OrderListComponent implements OnInit {
     if (p < 0 || p >= this.totalPages()) return;
     this.page.set(p);
     this.fetch();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  get pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages() }, (_, i) => i);
   }
 
   statusColor(status: string): string {
-    switch (status) {
-      case 'DELIVERED': return 'text-green-700 bg-green-50';
-      case 'CANCELLED': return 'text-wine bg-blush';
-      case 'PLACED': case 'CONFIRMED': return 'text-ink/70 bg-ink/5';
-      default: return 'text-wine bg-blush';
+    switch (status?.toUpperCase()) {
+      case 'DELIVERED':
+        return 'text-green-700 bg-green-50 border border-green-200/60';
+      case 'SHIPPED':
+      case 'OUT_FOR_DELIVERY':
+        return 'text-amber-800 bg-amber-50 border border-amber-200/60';
+      case 'PLACED':
+      case 'CONFIRMED':
+        return 'text-ink/80 bg-ink/5 border border-ink/10';
+      case 'CANCELLED':
+      case 'RETURNED':
+        return 'text-wine bg-blush border border-wine/15';
+      default:
+        return 'text-wine bg-blush border border-wine/15';
     }
   }
 }

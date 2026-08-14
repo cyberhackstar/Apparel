@@ -14,18 +14,21 @@ public class ProductSpecification {
     private ProductSpecification() {
     }
 
-    /**
-     * @param active null = no filter (admin "All"), true = active only (storefront), false = inactive only
-     */
     public static Specification<Product> build(Long categoryId,
-                                                BigDecimal minPrice,
-                                                BigDecimal maxPrice,
-                                                String size,
-                                                String color,
-                                                String keyword,
-                                                Boolean active) {
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            String size,
+            String color,
+            String keyword,
+            Boolean active) {
 
         return (root, query, cb) -> {
+            // Enforce distinct on the root query to prevent duplicated records from joined
+            // tables
+            if (query != null) {
+                query.distinct(true);
+            }
+
             List<Predicate> predicates = new ArrayList<>();
 
             if (active != null) {
@@ -49,11 +52,9 @@ public class ProductSpecification {
                 predicates.add(cb.or(
                         cb.like(cb.lower(root.get("name")), likePattern),
                         cb.like(cb.lower(root.get("description")), likePattern),
-                        cb.like(cb.lower(root.get("brand")), likePattern)
-                ));
+                        cb.like(cb.lower(root.get("brand")), likePattern)));
             }
 
-            // size/color live on the variants — join only when needed, and de-dupe results
             if ((size != null && !size.isBlank()) || (color != null && !color.isBlank())) {
                 Join<Product, ProductVariant> variantJoin = root.join("variants", JoinType.INNER);
                 if (size != null && !size.isBlank()) {
@@ -62,7 +63,6 @@ public class ProductSpecification {
                 if (color != null && !color.isBlank()) {
                     predicates.add(cb.equal(cb.lower(variantJoin.get("color")), color.toLowerCase()));
                 }
-                query.distinct(true);
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

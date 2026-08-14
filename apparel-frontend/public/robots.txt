@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+Allow: /products
+Allow: /products/*
+Allow: /about-us
+Allow: /contact-us
+Allow: /shipping-and-returns
+Allow: /privacy-policy
+Allow: /terms-and-conditions
+
+# Disallow authenticated accounts and checkout flow
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /account
+Disallow: /account/*
+Disallow: /checkout
+Disallow: /cart
+Disallow: /wishlist
+Disallow: /orders
+Disallow: /orders/*
+Disallow: /order-success/*
+Disallow: /auth/*
+
+# Main Sitemap Pointer for Crawlers
+Sitemap: https://apparel.bhawesh.shop/sitemap.xml
