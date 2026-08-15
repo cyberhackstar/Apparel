@@ -5,12 +5,16 @@
 @tailwind utilities;
 
 @layer base {
-  html, body {
+  html,
+  body {
     @apply bg-ivory text-ink font-body;
     -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply font-display text-ink;
   }
 
@@ -25,7 +29,9 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -68,5 +74,19 @@
 
   .eyebrow {
     @apply font-body font-semibold text-xs tracking-[0.18em] uppercase text-wine;
+  }
+}
+
+/* Prevents mobile Safari/Chrome auto-zoom on input focus */
+@media screen and (max-width: 768px) {
+  input[type='text'],
+  input[type='email'],
+  input[type='password'],
+  input[type='tel'],
+  input[type='number'],
+  select,
+  textarea,
+  .input-field {
+    font-size: 16px !important;
   }
 }

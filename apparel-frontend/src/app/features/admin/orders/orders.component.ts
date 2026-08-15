@@ -1,28 +1,38 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { AdminOrderService } from '../../../core/services/admin-order.service';
 import { Order, OrderStatus } from '../../../core/models/order.model';
 
 const STATUS_OPTIONS: OrderStatus[] = [
-  'PLACED', 'CONFIRMED', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'RETURNED',
+  'PLACED',
+  'CONFIRMED',
+  'PACKED',
+  'SHIPPED',
+  'OUT_FOR_DELIVERY',
+  'DELIVERED',
+  'CANCELLED',
+  'RETURNED',
 ];
 
 @Component({
   selector: 'app-admin-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './orders.component.html',
 })
 export class AdminOrdersComponent implements OnInit {
-  orders = signal<Order[]>([]);
-  loading = signal(true);
-  page = signal(0);
-  totalPages = signal(0);
-  statusOptions = STATUS_OPTIONS;
-  expandedOrder = signal<string | null>(null);
+  private readonly orderService = inject(AdminOrderService);
+  private readonly toastr = inject(ToastrService);
 
-  constructor(private orderService: AdminOrderService, private toastr: ToastrService) {}
+  readonly orders = signal<Order[]>([]);
+  readonly loading = signal(true);
+  readonly updatingStatus = signal<string | null>(null);
+  readonly page = signal(0);
+  readonly totalPages = signal(0);
+  readonly statusOptions = STATUS_OPTIONS;
+  readonly expandedOrder = signal<string | null>(null);
 
   ngOnInit(): void {
     this.fetch();
@@ -45,19 +55,37 @@ export class AdminOrdersComponent implements OnInit {
   }
 
   updateStatus(orderNumber: string, status: string): void {
-    this.orderService.updateStatus(orderNumber, status as OrderStatus).subscribe({
+    const newStatus = status as OrderStatus;
+    this.updatingStatus.set(orderNumber);
+
+    this.orderService.updateStatus(orderNumber, newStatus).subscribe({
       next: (updated) => {
-        this.orders.update((list) => list.map((o) => (o.orderNumber === orderNumber ? updated : o)));
-        this.toastr.success('Order status updated');
+        // Explicitly update the status on the matching order
+        this.orders.update((list) =>
+          list.map((o) =>
+            o.orderNumber === orderNumber
+              ? { ...o, ...updated, status: updated.status || newStatus }
+              : o,
+          ),
+        );
+        this.updatingStatus.set(null);
+        this.toastr.success(`Order #${orderNumber} updated to ${newStatus}`);
+      },
+      error: () => {
+        this.updatingStatus.set(null);
+        this.toastr.error('Failed to update status');
+        this.fetch(); // Re-fetch to reset select box to actual DB state
       },
     });
   }
 
   refund(orderNumber: string): void {
-    if (!confirm('Issue a refund for this order via Razorpay?')) return;
-    this.orderService.refund(orderNumber).subscribe(() => {
-      this.toastr.success('Refund initiated');
-      this.fetch();
+    if (!confirm(`Issue a refund for order #${orderNumber} via Razorpay?`)) return;
+    this.orderService.refund(orderNumber).subscribe({
+      next: () => {
+        this.toastr.success('Refund initiated');
+        this.fetch();
+      },
     });
   }
 

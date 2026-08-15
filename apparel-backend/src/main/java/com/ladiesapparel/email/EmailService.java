@@ -184,30 +184,32 @@ public class EmailService {
   }
 
   /**
-   * Master Responsive Email Template Wrapper adhering to the Ladies Apparel
-   * design system.
+   * Master Responsive Email Template Wrapper with locked color rendering
    */
   private String wrap(String heading, String eyebrow, String bodyHtml) {
     return """
         <!DOCTYPE html>
-        <html lang="en">
+        <html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="color-scheme" content="light">
+          <meta name="supported-color-schemes" content="light">
           <link rel="preconnect" href="https://fonts.googleapis.com">
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
           <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-          <!--[if mso]>
-          <noscript>
-            <xml>
-              <o:OfficeDocumentSettings>
-                <o:PixelsPerInch>96</o:PixelsPerInch>
-              </o:OfficeDocumentSettings>
-            </xml>
-          </noscript>
-          <![endif]-->
+          <style>
+            :root {
+              color-scheme: light;
+              supported-color-schemes: light;
+            }
+            body, table, td, p, a, h1, h2 {
+              -webkit-text-size-adjust: 100%% !important;
+              -ms-text-size-adjust: 100%% !important;
+            }
+          </style>
         </head>
-        <body style="margin:0; padding:0; background-color:%s; font-family:'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:%s; -webkit-font-smoothing:antialiased;">
+        <body style="margin:0; padding:0; background-color:%s; font-family:'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:%s; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;">
           <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" border="0" style="background-color:%s; width:100%%; margin:0 auto; padding:32px 12px;">
             <tr>
               <td align="center">
@@ -215,9 +217,9 @@ public class EmailService {
                 <!-- Main Card Container -->
                 <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px; width:100%%; background-color:#FFFFFF; border-radius:%s; overflow:hidden; box-shadow:0 8px 32px -4px rgba(43,36,32,0.08); border:1px solid rgba(43,36,32,0.06);">
 
-                  <!-- Header Banner -->
+                  <!-- Header Banner with Locked #5E2129 -->
                   <tr>
-                    <td style="background-color:%s; padding:36px 32px 32px; text-align:center;">
+                    <td style="background-color:%s; background-image:linear-gradient(%s, %s); padding:36px 32px 32px; text-align:center;">
                       <p style="margin:0 0 6px; font-family:'Manrope', Arial, sans-serif; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:%s; font-weight:600;">%s</p>
                       <h1 style="margin:0; font-family:'Fraunces', Georgia, serif; font-size:28px; line-height:1.2; font-weight:700; color:%s; letter-spacing:0.5px;">Ladies Apparel</h1>
                     </td>
@@ -259,7 +261,7 @@ public class EmailService {
         """
         .formatted(
             IVORY, INK, IVORY, RADIUS_PETAL,
-            WINE, BLUSH, escape(eyebrow), IVORY,
+            WINE_DARK, WINE_DARK, WINE_DARK, BLUSH, escape(eyebrow), IVORY,
             INK, escape(heading), WINE,
             INK, bodyHtml,
             IVORY, INK);
