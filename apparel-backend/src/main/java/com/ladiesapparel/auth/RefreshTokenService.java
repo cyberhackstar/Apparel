@@ -15,12 +15,11 @@ public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
 
-    @Value("${app.jwt.refresh-token-expiration-ms}")
+    @Value("${app.jwt.refresh-token-expiration-ms:604800000}") // Default 7 days
     private long refreshTokenExpirationMs;
 
     @Transactional
     public String createRefreshToken(User user) {
-        // one active refresh token per user — old sessions are invalidated on fresh login
         refreshTokenRepository.revokeAllForUser(user.getId());
 
         RefreshToken token = RefreshToken.builder()
@@ -37,13 +36,16 @@ public class RefreshTokenService {
     @Transactional
     public User verifyAndRotate(String rawToken) {
         RefreshToken token = refreshTokenRepository.findByToken(rawToken)
-                .orElseThrow(() -> ApiException.unauthorized("Invalid refresh token"));
+                .orElseThrow(() -> ApiException.unauthorized("Invalid or expired session. Please log in again."));
 
         if (token.isRevoked()) {
-            throw ApiException.unauthorized("This session has been logged out. Please login again.");
+            refreshTokenRepository.delete(token);
+            throw ApiException.unauthorized("This session has been revoked. Please log in again.");
         }
+
         if (Instant.now().isAfter(token.getExpiryDate())) {
-            throw ApiException.unauthorized("Session expired. Please login again.");
+            refreshTokenRepository.delete(token);
+            throw ApiException.unauthorized("Your session has expired. Please log in again.");
         }
 
         return token.getUser();
